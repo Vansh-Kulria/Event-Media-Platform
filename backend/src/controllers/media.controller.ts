@@ -226,3 +226,110 @@ export const getMediaById = async (
     });
   }
 };
+
+export const addComment = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const mediaId = req.params.mediaId as string;
+    const userId = req.user!.userId;
+    const { content } = req.body;
+
+    const comment = await prisma.comment.create({
+      data: {
+        content,
+        mediaId,
+        userId,
+      },
+    });
+
+    res.status(201).json(comment);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to add comment",
+    });
+  }
+};
+
+export const getComments = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const mediaId = req.params.mediaId as string;
+
+    const comments = await prisma.comment.findMany({
+      where: {
+        mediaId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.json(comments);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to fetch comments",
+    });
+  }
+};
+
+export const deleteComment = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const commentId = req.params.commentId as string;
+
+    const comment = await prisma.comment.findUnique({
+      where: {
+        id: commentId,
+      },
+    });
+
+    if (!comment) {
+      return res.status(404).json({
+        message: "Comment not found",
+      });
+    }
+
+    if (
+      comment.userId !== req.user!.userId &&
+      req.user!.role !== "ADMIN"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+
+    await prisma.comment.delete({
+      where: {
+        id: commentId,
+      },
+    });
+
+    res.json({
+      message: "Comment deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to delete comment",
+    });
+  }
+};

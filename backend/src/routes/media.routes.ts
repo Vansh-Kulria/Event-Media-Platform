@@ -11,7 +11,10 @@ import {
   deleteMedia,
   toggleLike,
   getLikesCount,
-  getMediaById
+  getMediaById,
+  addComment,
+  getComments,
+  deleteComment,
 } from "../controllers/media.controller";
 
 const router = Router();
@@ -43,6 +46,23 @@ router.get(
   "/:mediaId",
   authenticate,
   getMediaById
+);
+
+router.post(
+  "/:mediaId/comment",
+  authenticate,
+  addComment
+);
+
+router.get(
+  "/:mediaId/comments",
+  getComments
+);
+
+router.delete(
+  "/comments/:commentId",
+  authenticate,
+  deleteComment
 );
 
 export default router;

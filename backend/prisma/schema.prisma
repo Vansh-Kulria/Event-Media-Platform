@@ -27,9 +27,10 @@ model User {
   role      Role     @default(VIEWER)
   createdAt DateTime @default(now())
 
-  events Event[]
-  media  Media[]
-  likes  Like[]
+  events      Event[]
+  media       Media[]
+  likes       Like[]
+  comments    Comment[]
 }
 
 model Event {
@@ -68,7 +69,8 @@ model Media {
 
   uploadedById String
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
-  likes        Like[]
+  likes         Like[]
+  comments      Comment[]
 }
 
 model Like {
@@ -83,4 +85,18 @@ model Like {
   media   Media  @relation(fields: [mediaId], references: [id])
 
   @@unique([userId, mediaId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+
+  content   String
+
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+
+  mediaId   String
+  media     Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 }
