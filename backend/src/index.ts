@@ -1,13 +1,14 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+dotenv.config();
 import {
   authenticate,
   AuthRequest,
 } from "./middleware/auth.middleware";
 
 import authRoutes from "./routes/auth.routes";
-dotenv.config();
+import eventRoutes from "./routes/event.routes";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get(
 );
 
 app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");

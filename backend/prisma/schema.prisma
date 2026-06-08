@@ -26,4 +26,45 @@ model User {
   password  String
   role      Role     @default(VIEWER)
   createdAt DateTime @default(now())
+
+  events    Event[]
+  media     Media[]
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  category    String
+
+  eventDate   DateTime
+
+  isPublic    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+  createdBy   User @relation(fields: [createdById], references: [id])
+  media     Media[]
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Media {
+  id          String    @id @default(uuid())
+
+  url         String
+  type        MediaType
+
+  createdAt   DateTime  @default(now())
+
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id])
+
+  uploadedById String
+  uploadedBy  User      @relation(fields: [uploadedById], references: [id])
 }

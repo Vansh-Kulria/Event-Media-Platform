@@ -2,7 +2,17 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request {
-  user?: any;
+  user?: {
+    userId: string;
+    role: string;
+  };
+}
+
+import { JwtPayload } from "jsonwebtoken";
+
+interface CustomJwtPayload extends JwtPayload {
+  userId: string;
+  role: string;
 }
 
 export const authenticate = (
@@ -24,9 +34,14 @@ export const authenticate = (
       authHeader.split(" ")[1];
 
     const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    );
+  token,
+  process.env.JWT_SECRET as string
+) as CustomJwtPayload;
+
+req.user = {
+  userId: decoded.userId,
+  role: decoded.role,
+};
 
     req.user = decoded;
 
