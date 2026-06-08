@@ -68,3 +68,4 @@ model Media {
   uploadedById String
   uploadedBy  User      @relation(fields: [uploadedById], references: [id])
 }
+
