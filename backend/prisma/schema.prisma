@@ -31,6 +31,7 @@ model User {
   media       Media[]
   likes       Like[]
   comments    Comment[]
+  favorites   Favorite[]
 }
 
 model Event {
@@ -69,8 +70,10 @@ model Media {
 
   uploadedById String
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+  tags          String[]
   likes         Like[]
   comments      Comment[]
+  favorites     Favorite[]
 }
 
 model Like {
@@ -99,4 +102,19 @@ model Comment {
 
   mediaId   String
   media     Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+
+model Favorite {
+  id        String   @id @default(uuid())
+
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+
+  mediaId   String
+  media     Media @relation(fields: [mediaId], references: [id])
+
+  @@unique([userId, mediaId])
 }

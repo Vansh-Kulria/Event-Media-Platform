@@ -333,3 +333,105 @@ export const deleteComment = async (
     });
   }
 };
+
+
+export const toggleFavorite = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const mediaId = req.params.mediaId as string;
+    const userId = req.user!.userId;
+
+    const existingFavorite =
+      await prisma.favorite.findUnique({
+        where: {
+          userId_mediaId: {
+            userId,
+            mediaId,
+          },
+        },
+      });
+
+    if (existingFavorite) {
+      await prisma.favorite.delete({
+        where: {
+          id: existingFavorite.id,
+        },
+      });
+
+      return res.json({
+        favorited: false,
+      });
+    }
+
+    await prisma.favorite.create({
+      data: {
+        userId,
+        mediaId,
+      },
+    });
+
+    res.json({
+      favorited: true,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to toggle favorite",
+    });
+  }
+};
+
+export const getMyFavorites = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user!.userId;
+
+    const favorites =
+      await prisma.favorite.findMany({
+        where: {
+          userId,
+        },
+        include: {
+          media: true,
+        },
+      });
+
+    res.json(favorites);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to fetch favorites",
+    });
+  }
+};
+
+export const searchMedia = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { tag } = req.query;
+
+    const media = await prisma.media.findMany({
+      where: {
+        tags: {
+          has: tag as string,
+        },
+      },
+    });
+
+    res.json(media);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Search failed",
+    });
+  }
+};

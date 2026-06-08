@@ -15,6 +15,9 @@ import {
   addComment,
   getComments,
   deleteComment,
+  toggleFavorite,
+  getMyFavorites,
+  searchMedia,
 } from "../controllers/media.controller";
 
 const router = Router();
@@ -65,4 +68,20 @@ router.delete(
   deleteComment
 );
 
+router.post(
+  "/:mediaId/favorite",
+  authenticate,
+  toggleFavorite
+);
+
+router.get(
+  "/favorites/me",
+  authenticate,
+  getMyFavorites
+);
+
+router.get(
+  "/search",
+  searchMedia
+);
 export default router;
