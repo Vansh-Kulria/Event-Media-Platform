@@ -1,7 +1,13 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import {
+  authenticate,
+  AuthRequest,
+} from "./middleware/auth.middleware";
 
 import authRoutes from "./routes/auth.routes";
+dotenv.config();
 
 const app = express();
 
@@ -11,6 +17,13 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Backend Running");
 });
+app.get(
+  "/api/profile",
+  authenticate,
+  (req: AuthRequest, res) => {
+    res.json(req.user);
+  }
+);
 
 app.use("/api/auth", authRoutes);
 
