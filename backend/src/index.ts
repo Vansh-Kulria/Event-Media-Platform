@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import mediaRoutes from "./routes/media.routes";
 import dotenv from "dotenv";
 dotenv.config();
 import {
@@ -11,6 +10,7 @@ import {
 
 import authRoutes from "./routes/auth.routes";
 import eventRoutes from "./routes/event.routes";
+import mediaRoutes from "./routes/media.routes";
 
 const app = express();
 
@@ -39,6 +39,8 @@ app.use(
     path.join(__dirname, "../uploads")
   )
 );
+
+
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");

@@ -108,3 +108,121 @@ export const deleteMedia = async (
     });
   }
 };
+
+export const toggleLike = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const mediaId = req.params.mediaId as string;
+    const userId = req.user!.userId;
+
+    const existingLike = await prisma.like.findUnique({
+      where: {
+        userId_mediaId: {
+          userId,
+          mediaId,
+        },
+      },
+    });
+
+    if (existingLike) {
+      await prisma.like.delete({
+        where: {
+          id: existingLike.id,
+        },
+      });
+
+      return res.json({
+        liked: false,
+        message: "Like removed",
+      });
+    }
+
+    await prisma.like.create({
+      data: {
+        userId,
+        mediaId,
+      },
+    });
+
+    res.json({
+      liked: true,
+      message: "Photo liked",
+    });
+  }catch (error: any) {
+  console.error(error);
+
+  res.status(500).json({
+    message: "Failed to toggle like",
+  });
+}
+};
+
+export const getLikesCount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const mediaId = req.params.mediaId as string;
+
+    const count = await prisma.like.count({
+      where: {
+        mediaId,
+      },
+    });
+
+    res.json({
+      likesCount: count,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch likes count",
+    });
+  }
+};
+
+export const getMediaById = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const mediaId = req.params.mediaId as string;
+    const userId = req.user?.userId;
+
+    const media = await prisma.media.findUnique({
+      where: {
+        id: mediaId,
+      },
+      include: {
+        likes: true,
+      },
+    });
+
+    if (!media) {
+      return res.status(404).json({
+        message: "Media not found",
+      });
+    }
+
+    const likedByCurrentUser = media.likes.some(
+      (like) => like.userId === userId
+    );
+
+    res.json({
+      id: media.id,
+      url: media.url,
+      type: media.type,
+
+      likesCount: media.likes.length,
+
+      likedByCurrentUser,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to fetch media",
+    });
+  }
+};

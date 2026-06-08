@@ -9,6 +9,9 @@ import {
   uploadMedia,
   getEventMedia,
   deleteMedia,
+  toggleLike,
+  getLikesCount,
+  getMediaById
 } from "../controllers/media.controller";
 
 const router = Router();
@@ -26,6 +29,20 @@ router.delete(
   "/:id",
   authenticate,
   deleteMedia
+);
+
+router.post(
+  "/:mediaId/like",
+  authenticate,
+  toggleLike
+);
+
+router.get("/:mediaId/likes", getLikesCount);
+
+router.get(
+  "/:mediaId",
+  authenticate,
+  getMediaById
 );
 
 export default router;

@@ -27,26 +27,27 @@ model User {
   role      Role     @default(VIEWER)
   createdAt DateTime @default(now())
 
-  events    Event[]
-  media     Media[]
+  events Event[]
+  media  Media[]
+  likes  Like[]
 }
 
 model Event {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
   description String?
   category    String
 
-  eventDate   DateTime
+  eventDate DateTime
 
-  isPublic    Boolean  @default(true)
+  isPublic Boolean @default(true)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   createdById String
-  createdBy   User @relation(fields: [createdById], references: [id])
-  media     Media[]
+  createdBy   User    @relation(fields: [createdById], references: [id])
+  media       Media[]
 }
 
 enum MediaType {
@@ -55,17 +56,31 @@ enum MediaType {
 }
 
 model Media {
-  id          String    @id @default(uuid())
+  id String @id @default(uuid())
 
-  url         String
-  type        MediaType
+  url  String
+  type MediaType
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  eventId     String
-  event       Event     @relation(fields: [eventId], references: [id])
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
 
   uploadedById String
-  uploadedBy  User      @relation(fields: [uploadedById], references: [id])
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+  likes        Like[]
 }
 
+model Like {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  mediaId String
+  media   Media  @relation(fields: [mediaId], references: [id])
+
+  @@unique([userId, mediaId])
+}
