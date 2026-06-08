@@ -46,6 +46,11 @@ router.post(
 router.get("/:mediaId/likes", getLikesCount);
 
 router.get(
+  "/search",
+  searchMedia
+);
+
+router.get(
   "/:mediaId",
   authenticate,
   getMediaById
@@ -80,8 +85,5 @@ router.get(
   getMyFavorites
 );
 
-router.get(
-  "/search",
-  searchMedia
-);
+
 export default router;

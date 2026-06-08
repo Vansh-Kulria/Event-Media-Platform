@@ -1,12 +1,27 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { MediaType } from "@prisma/client/wasm";
 
 export const uploadMedia = async (
   req: AuthRequest,
   res: Response
 ) => {
   try {
+
+    // ******************************
+  console.log("BODY:", req.body);
+console.log("RAW TAGS:", req.body.tags);
+
+const tags = req.body.tags
+  ? req.body.tags.split(",")
+  : [];
+
+console.log("PARSED TAGS:", tags);
+
+    // *******************************
+
+
     if (!req.file) {
       return res.status(400).json({
         message: "No file uploaded",
@@ -18,9 +33,10 @@ export const uploadMedia = async (
     const media = await prisma.media.create({
       data: {
         url: `/uploads/${req.file.filename}`,
-        type: "IMAGE",
+        type: MediaType.IMAGE,
         eventId,
         uploadedById: req.user!.userId,
+        tags,
       },
     });
 
@@ -416,12 +432,50 @@ export const searchMedia = async (
   res: Response
 ) => {
   try {
-    const { tag } = req.query;
+    const { tag, event, user } = req.query;
 
     const media = await prisma.media.findMany({
       where: {
-        tags: {
-          has: tag as string,
+        AND: [
+          tag
+            ? {
+                tags: {
+                  has: tag as string,
+                },
+              }
+            : {},
+
+          event
+            ? {
+                event: {
+                  title: {
+                    contains: event as string,
+                    mode: "insensitive",
+                  },
+                },
+              }
+            : {},
+
+          user
+            ? {
+                uploadedBy: {
+                  name: {
+                    contains: user as string,
+                    mode: "insensitive",
+                  },
+                },
+              }
+            : {},
+        ],
+      },
+
+      include: {
+        event: true,
+        uploadedBy: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
     });

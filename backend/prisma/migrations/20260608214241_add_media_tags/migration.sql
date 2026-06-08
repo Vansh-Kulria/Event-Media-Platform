@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Media" ALTER COLUMN "tags" SET DEFAULT ARRAY[]::TEXT[];

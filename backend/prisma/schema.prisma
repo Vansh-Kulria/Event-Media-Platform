@@ -70,7 +70,7 @@ model Media {
 
   uploadedById String
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
-  tags          String[]
+  tags          String[]  @default([])
   likes         Like[]
   comments      Comment[]
   favorites     Favorite[]
