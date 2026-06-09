@@ -9,6 +9,14 @@ const links = [
   { name: "Media", href: "/dashboard/media" },
   { name: "Comments", href: "/dashboard/comments" },
   { name: "Users", href: "/dashboard/users" },
+  {
+  name: "Favorites",
+  href: "/dashboard/favorites"},
+  {
+  name: "Notifications",
+  href: "/dashboard/notifications",
+}
+
 ];
 
 export default function Sidebar() {
