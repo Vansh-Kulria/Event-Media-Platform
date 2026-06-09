@@ -1205,8 +1205,9 @@ export const shareMedia = async (
       },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const shareUrl = `${frontendUrl}/shared/${media.id}`;
+    const rawFrontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const cleanFrontendUrl = rawFrontendUrl.endsWith("/") ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
+    const shareUrl = `${cleanFrontendUrl}/shared/${media.id}`;
 
     res.json({
       shareUrl,

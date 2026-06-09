@@ -26,9 +26,12 @@ import notificationRoutes from "./routes/notification.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 
 
+const rawFrontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+const cleanFrontendUrl = rawFrontendUrl.endsWith("/") ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: [cleanFrontendUrl, `${cleanFrontendUrl}/`],
     credentials: true,
   })
 );
