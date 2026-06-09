@@ -38,7 +38,7 @@ export default function MobileSidebar() {
           />
 
           {/* Drawer Menu */}
-          <div className="fixed left-0 top-0 h-full w-72 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-r border-slate-200 dark:border-white/10 z-50 p-6 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300">
+          <div className="fixed left-0 top-0 h-full w-72 bg-black/80 dark:bg-slate-950/80 backdrop-blur-md border-r border-slate-200 dark:border-white/10 z-50 p-6 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4 mb-6">
               <h2 className="text-lg font-extrabold bg-linear-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
