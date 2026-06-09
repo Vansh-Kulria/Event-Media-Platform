@@ -1,82 +1,219 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
+import { getAnalytics } from "@/services/media.service";
+import { X, Download, Heart, Award, Sparkles } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        setLoading(true);
+        const data = await getAnalytics();
+        setAnalytics(data);
+      } catch (error) {
+        console.error("Failed to load analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAnalytics();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-20 text-center space-y-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-500 border-t-transparent mx-auto" />
+        <p className="text-slate-400 text-sm">Loading analytics dashboard...</p>
+      </div>
+    );
+  }
+
+  const stats = [
+    {
+      name: "Total Events",
+      value: analytics?.totalEvents || 0,
+      icon: "📅",
+      color: "from-violet-600/10 to-indigo-600/10 text-violet-400",
+      link: "/dashboard/events",
+      linkLabel: "Browse albums →",
+    },
+    {
+      name: "Uploaded Media",
+      value: analytics?.totalMedia || 0,
+      icon: "🖼️",
+      color: "from-indigo-600/10 to-blue-600/10 text-indigo-400",
+      link: "/dashboard/events",
+      linkLabel: "View gallery →",
+    },
+    {
+      name: "Community Users",
+      value: analytics?.totalUsers || 0,
+      icon: "👥",
+      color: "from-cyan-600/10 to-blue-600/10 text-cyan-400",
+      link: "/dashboard/search",
+      linkLabel: "Search users →",
+    },
+    {
+      name: "Interactions",
+      value: (analytics?.totalLikes || 0) + (analytics?.totalComments || 0) + (analytics?.totalFavorites || 0),
+      icon: "🔥",
+      color: "from-emerald-600/10 to-teal-600/10 text-emerald-400",
+      link: "/dashboard/notifications",
+      linkLabel: "View alerts →",
+    },
+  ];
+
+  const mostLikedMedia = analytics?.mostLikedMedia;
+  const isVideo = mostLikedMedia?.url && [".mp4", ".mov", ".webm", ".avi", ".mkv"].some((ext) =>
+    mostLikedMedia.url.toLowerCase().endsWith(ext)
+  );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-10 animate-in fade-in duration-300">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
           Welcome back, {user?.name || "User"}!
         </h1>
         <p className="text-slate-400 mt-2">
-          Here is an overview of your Event Media Hub activities.
+          Here is the real-time analytical overview of your Event Media Hub activity.
         </p>
       </div>
 
       {/* Grid of stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Card 1 */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-violet-600/10 blur-xl" />
-          <p className="text-sm font-semibold tracking-wider uppercase text-slate-400">Total Events</p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-white">📅 View</span>
-            <Link
-              href="/dashboard/events"
-              className="text-xs font-bold text-violet-400 hover:text-violet-300 transition cursor-pointer"
-            >
-              Browse list →
-            </Link>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.name}
+            className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg transition-all duration-300 hover:border-white/20"
+          >
+            <div className={`absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${stat.color} blur-xl`} />
+            <div className="flex justify-between items-start">
+              <p className="text-xs font-bold tracking-widest uppercase text-slate-400">{stat.name}</p>
+              <span className="text-xl">{stat.icon}</span>
+            </div>
+            <div className="mt-4 flex items-baseline justify-between">
+              <span className="text-3xl font-extrabold text-white">{stat.value}</span>
+              <Link
+                href={stat.link}
+                className="text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                {stat.linkLabel}
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Insights Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Most Active Photographer */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute top-0 right-0 -mt-6 -mr-6 h-32 w-32 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+              <Award className="h-5 w-5 text-violet-400" />
+              <h2 className="text-sm font-extrabold text-slate-300 uppercase tracking-wider">
+                Top Contributor
+              </h2>
+            </div>
+
+            {analytics?.mostActiveUser ? (
+              <div className="space-y-3 py-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-xl font-bold text-violet-300">
+                    👤
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-white">{analytics.mostActiveUser.name}</p>
+                    <p className="text-xs text-slate-400">Community Photographer</p>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Total Uploaded Items</span>
+                  <span className="font-extrabold text-violet-400">{analytics.mostActiveUser.uploads} uploads</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 italic py-6 text-center">No active users yet.</p>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Awarded to the photographer who uploaded the highest amount of photos and videos.
+            </p>
           </div>
         </div>
 
-        {/* Card 2 */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-indigo-600/10 blur-xl" />
-          <p className="text-sm font-semibold tracking-wider uppercase text-slate-400">My Favorites</p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-white">⭐ Saved</span>
-            <Link
-              href="/dashboard/favorites"
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition cursor-pointer"
-            >
-              View saved →
-            </Link>
-          </div>
-        </div>
+        {/* Most Popular Image */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute top-0 right-0 -mt-6 -mr-6 h-32 w-32 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+              <Sparkles className="h-5 w-5 text-indigo-400" />
+              <h2 className="text-sm font-extrabold text-slate-300 uppercase tracking-wider">
+                Most Liked Photo
+              </h2>
+            </div>
 
-        {/* Card 3 */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-cyan-600/10 blur-xl" />
-          <p className="text-sm font-semibold tracking-wider uppercase text-slate-400">Selfie Discovery</p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-white">📸 Matched</span>
-            <Link
-              href="/dashboard/my-photos"
-              className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition cursor-pointer"
-            >
-              Find matches →
-            </Link>
-          </div>
-        </div>
+            {mostLikedMedia ? (
+              <div className="flex items-center gap-4 py-1">
+                <div 
+                  onClick={() => setIsLightboxOpen(true)}
+                  className="relative h-20 w-32 rounded-lg overflow-hidden border border-white/15 bg-slate-950 cursor-pointer shadow group/thumb"
+                >
+                  {isVideo ? (
+                    <video
+                      src={mostLikedMedia.url.startsWith("http") ? mostLikedMedia.url : `http://localhost:5000${mostLikedMedia.url}`}
+                      className="h-full w-full object-cover"
+                      muted
+                    />
+                  ) : (
+                    <img
+                      src={mostLikedMedia.url.startsWith("http") ? mostLikedMedia.url : `http://localhost:5000${mostLikedMedia.url}`}
+                      alt="Most Liked"
+                      className="h-full w-full object-cover group-hover/thumb:scale-105 transition duration-300"
+                    />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition duration-200">
+                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">View</span>
+                  </div>
+                </div>
 
-        {/* Card 4 */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-emerald-600/10 blur-xl" />
-          <p className="text-sm font-semibold tracking-wider uppercase text-slate-400">Notifications</p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-white">🔔 Alerts</span>
-            <Link
-              href="/dashboard/notifications"
-              className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition cursor-pointer"
-            >
-              Check inbox →
-            </Link>
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Popularity Rank #1</p>
+                  <div className="flex items-center gap-1.5 text-sm font-extrabold text-white">
+                    <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                    <span>{mostLikedMedia.likes} Likes</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsLightboxOpen(true)}
+                    className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition cursor-pointer"
+                  >
+                    Open lightbox view →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 italic py-6 text-center">No likes recorded yet.</p>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Highest rated media file in event galleries based on community likes.
+            </p>
           </div>
         </div>
       </div>
@@ -123,6 +260,38 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Lightbox Modal for Most Liked Image */}
+      {isLightboxOpen && mostLikedMedia && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          <div className="relative flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setIsLightboxOpen(false)}
+              className="absolute -top-12 right-0 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition cursor-pointer"
+              title="Close modal"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {isVideo ? (
+              <video
+                src={mostLikedMedia.url.startsWith("http") ? mostLikedMedia.url : `http://localhost:5000${mostLikedMedia.url}`}
+                className="max-h-[85vh] max-w-[85vw] rounded-lg"
+                controls
+                autoPlay
+              />
+            ) : (
+              <img
+                src={mostLikedMedia.url.startsWith("http") ? mostLikedMedia.url : `http://localhost:5000${mostLikedMedia.url}`}
+                alt="Most Popular Media"
+                className="max-h-[85vh] max-w-[85vw] object-contain rounded-lg shadow-2xl"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

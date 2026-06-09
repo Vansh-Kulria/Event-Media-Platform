@@ -235,3 +235,8 @@ export const searchMedia = async (params: { tag?: string; event?: string; user?:
   const response = await api.get(`/media/search${queryStr}`);
   return response.data;
 };
+
+export const getAnalytics = async () => {
+  const response = await api.get("/analytics");
+  return response.data;
+};

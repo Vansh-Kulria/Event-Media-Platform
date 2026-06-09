@@ -14,7 +14,7 @@ import api from "@/lib/axios";
 import { useAuthStore } from "@/store/auth-store";
 import MediaComments from "./MediaComments";
 import { toast } from "sonner";
-import { Star, X, Heart, MessageCircle, Share2, Download } from "lucide-react";
+import { Star, X, Heart, MessageCircle, Share2, Download, Link as LinkIcon, Check, ExternalLink } from "lucide-react";
 
 type Props = {
   media: any;
@@ -465,87 +465,128 @@ export default function MediaCard({
       {/* Social Share Modal Overlay */}
       {showShareModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-in fade-in duration-300"
           onClick={() => setShowShareModal(false)}
         >
           <div 
-            className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 space-y-5"
+            className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 duration-200 space-y-6 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Ambient background glow */}
+            <div className="absolute -top-12 -left-12 h-32 w-32 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -right-12 h-32 w-32 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                🔗 Share Media
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <h3 className="text-base font-extrabold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-violet-400" />
+                Share Media Link
               </h3>
               <button
                 onClick={() => setShowShareModal(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-950 dark:hover:text-white transition cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Direct Link Copy */}
+            {/* Direct Link Copy with Icon */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                 Direct Link
               </label>
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={shareData.url}
-                  className="flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 outline-none select-all"
-                />
+                <div className="flex-1 relative flex items-center">
+                  <span className="absolute left-3 text-slate-500">
+                    <LinkIcon className="h-4 w-4" />
+                  </span>
+                  <input
+                    type="text"
+                    readOnly
+                    value={shareData.url}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 pl-9 pr-3 py-2.5 text-xs text-slate-300 outline-none select-all focus:border-violet-500 transition"
+                  />
+                </div>
                 <button
                   onClick={copyToClipboard}
-                  className="rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-bold text-white transition hover:from-violet-500 hover:to-indigo-500 cursor-pointer min-w-[80px]"
+                  className={`rounded-xl px-4 py-2.5 text-xs font-bold text-white transition flex items-center justify-center gap-1.5 min-w-[95px] cursor-pointer shadow-lg ${
+                    copied
+                      ? "bg-emerald-600 shadow-emerald-950/20"
+                      : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-violet-950/20"
+                  }`}
                 >
-                  {copied ? "Copied!" : "Copy"}
+                  {copied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      Copied
+                    </>
+                  ) : (
+                    "Copy Link"
+                  )}
                 </button>
               </div>
             </div>
 
+            {/* QR Code Section */}
+            <div className="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-2xl space-y-2.5">
+              <div className="bg-white p-2.5 rounded-xl shadow-lg border border-white/5">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(shareData.url)}`}
+                  alt="Share QR Code"
+                  className="h-[120px] w-[120px] object-contain"
+                />
+              </div>
+              <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">
+                Scan QR to open on mobile
+              </span>
+            </div>
+
             {/* Social Share Buttons */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                 Share To Socials
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2.5">
                 <a
                   href={`https://api.whatsapp.com/send?text=${encodeURIComponent("Check out this photo: " + shareData.url)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/40 p-2.5 text-center text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500/30 transition flex flex-col items-center gap-1 cursor-pointer"
+                  className="rounded-xl border border-white/10 bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-300 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30 transition flex flex-col items-center gap-1.5 cursor-pointer"
                 >
-                  <span className="text-lg">💬</span>
+                  <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.012 2C6.48 2 2 6.48 2 12.012c0 1.766.457 3.483 1.332 5.006L2 22l5.127-1.344a9.96 9.96 0 0 0 4.885 1.256c5.532 0 10.012-4.48 10.012-10.012C22.024 6.48 17.544 2 12.012 2zm6.275 13.91c-.276.772-1.366 1.41-1.886 1.503-.456.082-.84.288-2.854-.506-2.57-.996-4.205-3.57-4.332-3.74-.127-.17-1.03-1.364-1.03-2.603 0-1.24.643-1.848.873-2.096.23-.248.5-.31.67-.31h.525c.17 0 .393-.062.61.455.228.537.78 1.896.848 2.032.068.136.113.295.023.475-.09.18-.135.295-.27.455-.136.16-.285.35-.41.475-.136.126-.278.263-.12.536.158.273.7 1.144 1.503 1.854.803.71 1.48.93 1.69 1.023.21.092.333.078.455-.062.12-.14.536-.62.68-.83.14-.207.296-.17.495-.098.2.072 1.27.6 1.493.712.223.11.37.165.424.258.053.093.053.537-.222 1.31z" />
+                  </svg>
                   WhatsApp
                 </a>
                 <a
                   href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareData.url)}&text=${encodeURIComponent("Check out this media item!")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/40 p-2.5 text-center text-xs font-semibold hover:bg-slate-500/10 hover:text-sky-400 hover:border-sky-400/30 transition flex flex-col items-center gap-1 cursor-pointer"
+                  className="rounded-xl border border-white/10 bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/30 transition flex flex-col items-center gap-1.5 cursor-pointer"
                 >
-                  <span className="text-lg">🐦</span>
+                  <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
                   Twitter / X
                 </a>
                 <a
                   href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/40 p-2.5 text-center text-xs font-semibold hover:bg-blue-500/10 hover:text-blue-500 hover:border-blue-500/30 transition flex flex-col items-center gap-1 cursor-pointer"
+                  className="rounded-xl border border-white/10 bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-300 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/30 transition flex flex-col items-center gap-1.5 cursor-pointer"
                 >
-                  <span className="text-lg">👥</span>
+                  <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M9.101 23.685v-9.504H6.183v-3.647h2.918V7.714c0-2.893 1.767-4.469 4.348-4.469 1.237 0 2.298.092 2.607.133v3.024h-1.79c-1.402 0-1.674.666-1.674 1.644v2.156h3.349l-.436 3.647h-2.913v9.503c5.913-.872 10.37-6.027 10.37-12.235C22.68 5.143 17.537 0 11.18 0S-.32 5.143-.32 11.45c0 6.208 4.457 11.363 10.37 12.235z" />
+                  </svg>
                   Facebook
                 </a>
               </div>
             </div>
 
             {/* Share Stats */}
-            <div className="border-t border-slate-100 dark:border-white/5 pt-3 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-              <span>📊 Total Share Count</span>
-              <span className="font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded">
+            <div className="border-t border-white/5 pt-3.5 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+              <span>📈 Total Shares</span>
+              <span className="font-extrabold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2.5 py-0.5 rounded-full">
                 {shareData.count} shares
               </span>
             </div>
