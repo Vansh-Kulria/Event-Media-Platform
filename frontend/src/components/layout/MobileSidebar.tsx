@@ -41,7 +41,7 @@ export default function MobileSidebar() {
           <div className="fixed left-0 top-0 h-full w-72 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-r border-slate-200 dark:border-white/10 z-50 p-6 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4 mb-6">
-              <h2 className="text-lg font-extrabold bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
+              <h2 className="text-lg font-extrabold bg-linear-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
                 ⚡ EventMedia
               </h2>
               <button
@@ -63,7 +63,7 @@ export default function MobileSidebar() {
                     onClick={() => setOpen(false)}
                     className={`block rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 cursor-pointer ${
                       active
-                        ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/20"
+                        ? "bg-linear-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/20"
                         : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
