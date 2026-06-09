@@ -32,6 +32,11 @@ model User {
   likes       Like[]
   comments    Comment[]
   favorites   Favorite[]
+  selfieUrl   String?
+  faceMatches FaceMatch[]
+  notifications Notification[]
+  taggedIn   MediaTag[] @relation("TaggedUser")
+taggedByMe MediaTag[] @relation("TaggedBy")
 }
 
 model Event {
@@ -74,6 +79,9 @@ model Media {
   likes         Like[]
   comments      Comment[]
   favorites     Favorite[]
+  faceMatches   FaceMatch[]
+  mediaTags     MediaTag[]
+
 }
 
 model Like {
@@ -115,6 +123,51 @@ model Favorite {
 
   mediaId   String
   media     Media @relation(fields: [mediaId], references: [id])
+
+  @@unique([userId, mediaId])
+}
+
+model FaceMatch {
+  id         String   @id @default(uuid())
+
+  confidence Float
+
+  createdAt  DateTime @default(now())
+
+  userId     String
+  user       User @relation(fields: [userId], references: [id])
+
+  mediaId    String
+  media      Media @relation(fields: [mediaId], references: [id])
+
+  @@unique([userId, mediaId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+
+  message   String
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+}
+
+model MediaTag {
+  id         String @id @default(uuid())
+
+  createdAt  DateTime @default(now())
+
+  userId     String
+  user       User @relation("TaggedUser", fields: [userId], references: [id])
+
+  mediaId    String
+  media      Media @relation(fields: [mediaId], references: [id])
+
+  taggedById String
+  taggedBy   User @relation("TaggedBy", fields: [taggedById], references: [id])
 
   @@unique([userId, mediaId])
 }

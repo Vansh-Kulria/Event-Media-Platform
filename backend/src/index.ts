@@ -11,6 +11,7 @@ import {
 import authRoutes from "./routes/auth.routes";
 import eventRoutes from "./routes/event.routes";
 import mediaRoutes from "./routes/media.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 const app = express();
 
@@ -32,13 +33,14 @@ app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 
 app.use("/api/media", mediaRoutes);
-
+app.use("/api/notifications", notificationRoutes);
 app.use(
   "/uploads",
   express.static(
     path.join(__dirname, "../uploads")
   )
 );
+
 
 
 

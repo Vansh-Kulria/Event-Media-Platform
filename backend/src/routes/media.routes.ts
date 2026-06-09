@@ -18,6 +18,16 @@ import {
   toggleFavorite,
   getMyFavorites,
   searchMedia,
+  getMyPhotos,
+  uploadSelfie,
+  getMySelfie,
+  recognizeFace,
+  tagUser,
+  getMediaTags,
+  getTaggedPhotos,
+  removeTag,
+  downloadMedia,
+  
 } from "../controllers/media.controller";
 
 const router = Router();
@@ -28,26 +38,80 @@ router.post(
     upload.single("file"),
     uploadMedia
 );
-    
+
 router.get("/events/:eventId", getEventMedia);
 
 router.delete(
-  "/:id",
-  authenticate,
-  deleteMedia
+    "/:id",
+    authenticate,
+    deleteMedia
 );
 
 router.post(
-  "/:mediaId/like",
-  authenticate,
-  toggleLike
+    "/:mediaId/like",
+    authenticate,
+    toggleLike
 );
 
 router.get("/:mediaId/likes", getLikesCount);
 
 router.get(
-  "/search",
-  searchMedia
+    "/search",
+    searchMedia
+);
+
+router.get(
+  "/my-photos",
+  authenticate,
+  getMyPhotos
+);
+
+router.post(
+  "/upload-selfie",
+  authenticate,
+  upload.single("file"),
+  uploadSelfie
+);
+
+router.get(
+  "/my-selfie",
+  authenticate,
+  getMySelfie
+);
+
+router.post(
+  "/recognize-face",
+  authenticate,
+  recognizeFace
+);
+
+router.post(
+  "/:mediaId/tag",
+  authenticate,
+  tagUser
+);
+
+router.get(
+  "/:mediaId/tags",
+  getMediaTags
+);
+
+router.get(
+  "/tagged/me",
+  authenticate,
+  getTaggedPhotos
+);
+
+router.delete(
+  "/:mediaId/tag",
+  authenticate,
+  removeTag
+);
+
+router.get(
+  "/:mediaId/download",
+  authenticate,
+  downloadMedia
 );
 
 router.get(
@@ -84,6 +148,8 @@ router.get(
   authenticate,
   getMyFavorites
 );
+
+
 
 
 export default router;
