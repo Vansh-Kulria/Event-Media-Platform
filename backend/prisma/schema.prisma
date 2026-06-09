@@ -81,6 +81,7 @@ model Media {
   favorites     Favorite[]
   faceMatches   FaceMatch[]
   mediaTags     MediaTag[]
+  shareCount Int @default(0)
 
 }
 

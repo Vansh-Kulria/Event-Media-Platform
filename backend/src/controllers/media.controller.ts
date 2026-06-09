@@ -3,8 +3,11 @@ import prisma from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { MediaType } from "@prisma/client/wasm";
 import { generateTags } from "../services/ai.service";
+import { findMatchingPhotos }
+from "../services/faceMatch.service";
 import sharp from "sharp";
 import path from "path";
+import { getIO } from "../socket";
 
 
 export const uploadMedia = async (
@@ -115,11 +118,41 @@ export const deleteMedia = async (
             });
         }
 
-        await prisma.media.delete({
-            where: {
-                id: mediaId,
-            },
-        });
+await prisma.like.deleteMany({
+  where: {
+    mediaId,
+  },
+});
+
+await prisma.comment.deleteMany({
+  where: {
+    mediaId,
+  },
+});
+
+await prisma.favorite.deleteMany({
+  where: {
+    mediaId,
+  },
+});
+
+await prisma.mediaTag.deleteMany({
+  where: {
+    mediaId,
+  },
+});
+
+await prisma.faceMatch.deleteMany({
+  where: {
+    mediaId,
+  },
+});
+
+await prisma.media.delete({
+  where: {
+    id: mediaId,
+  },
+});
 
         res.json({
             message: "Media deleted successfully",
@@ -192,6 +225,17 @@ export const toggleLike = async (
                     message: `${currentUser?.name} liked your photo`,
                 },
             });
+
+            const notification = await prisma.notification.create({
+  data: {
+    userId: media.uploadedById,
+    message: `${currentUser?.name} liked your photo`,
+  },
+});
+
+getIO()
+  .to(media.uploadedById)
+  .emit("notification", notification);
         }
 
         res.json({
@@ -308,12 +352,17 @@ export const addComment = async (
             media &&
             media.uploadedById !== userId
         ) {
-            await prisma.notification.create({
-                data: {
-                    userId: media.uploadedById,
-                    message: `${currentUser?.name} commented on your photo`,
-                },
-            });
+
+ const notification = await prisma.notification.create({
+  data: {
+    userId: media.uploadedById,
+    message: `${currentUser?.name} commented on your photo`,
+  },
+});
+
+getIO()
+  .to(media.uploadedById)
+  .emit("notification", notification);
         }
 
         res.status(201).json(comment);
@@ -602,6 +651,51 @@ export const uploadSelfie = async (
             selfieUrl: user.selfieUrl,
         });
 
+        const selfiePath = `uploads/${req.file.filename}`;
+
+const matches = await findMatchingPhotos(
+  selfiePath
+);
+console.log("MATCHES:", matches);
+
+for (const matchPath of matches) {
+  const normalizedPath =
+    "/" + matchPath.replace(/\\/g, "/");
+
+  // Skip the selfie itself
+  if (
+    normalizedPath ===
+    `/uploads/${req.file.filename}`
+  ) {
+    continue;
+  }
+
+  const media = await prisma.media.findFirst({
+    where: {
+      url: normalizedPath,
+    },
+  });
+
+  if (!media) continue;
+
+  await prisma.faceMatch.upsert({
+    where: {
+      userId_mediaId: {
+        userId: user.id,
+        mediaId: media.id,
+      },
+    },
+
+    update: {},
+
+    create: {
+      userId: user.id,
+      mediaId: media.id,
+      confidence: 0.95,
+    },
+  });
+}
+
     } catch (error) {
         console.error(error);
 
@@ -711,13 +805,15 @@ export const tagUser = async (
   },
 });
 
-await prisma.notification.create({
+const notification = await prisma.notification.create({
   data: {
     userId: taggedUserId,
     message: `${currentUser?.name} tagged you in a photo`,
   },
 });
-
+ getIO()
+  .to(taggedUserId)
+  .emit("notification", notification);
   } catch (error) {
     console.error(error);
 
@@ -883,6 +979,41 @@ export const downloadMedia = async (
 
     res.status(500).json({
       message: "Download failed",
+    });
+  }
+};
+
+export const shareMedia = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const mediaId = req.params.mediaId as string;
+
+    const media = await prisma.media.update({
+      where: {
+        id: mediaId,
+      },
+      data: {
+        shareCount: {
+          increment: 1,
+        },
+      },
+    });
+
+    const shareUrl =
+      `${req.protocol}://${req.get("host")}/api/media/${media.id}`;
+
+    res.json({
+      shareUrl,
+      shareCount: media.shareCount,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to share media",
     });
   }
 };

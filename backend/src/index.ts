@@ -1,6 +1,16 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import http from "http";
+import { initSocket } from "./socket";
+
+
+const app = express();
+const server = http.createServer(app);
+
+
+initSocket(server);
+const PORT = process.env.PORT || 5000;
 import dotenv from "dotenv";
 dotenv.config();
 import {
@@ -12,10 +22,16 @@ import authRoutes from "./routes/auth.routes";
 import eventRoutes from "./routes/event.routes";
 import mediaRoutes from "./routes/media.routes";
 import notificationRoutes from "./routes/notification.routes";
+import analyticsRoutes from "./routes/analytics.routes";
 
-const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -41,9 +57,12 @@ app.use(
   )
 );
 
+app.use(
+  "/api/analytics",
+  analyticsRoutes
+);
 
 
-
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+server.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
 });

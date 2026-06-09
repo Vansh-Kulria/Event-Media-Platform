@@ -27,6 +27,7 @@ import {
   getTaggedPhotos,
   removeTag,
   downloadMedia,
+  shareMedia,
   
 } from "../controllers/media.controller";
 
@@ -112,6 +113,11 @@ router.get(
   "/:mediaId/download",
   authenticate,
   downloadMedia
+);
+
+router.get(
+  "/:mediaId/share",
+  shareMedia
 );
 
 router.get(
