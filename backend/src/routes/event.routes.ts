@@ -8,15 +8,15 @@ import {
   deleteEvent,
 } from "../controllers/event.controller";
 
-import { authenticate } from "../middleware/auth.middleware";
+import { authenticate, optionalAuthenticate } from "../middleware/auth.middleware";
 
 const router = Router();
 
 router.post("/", authenticate, createEvent);
 
-router.get("/", getEvents);
+router.get("/", optionalAuthenticate, getEvents);
 
-router.get("/:id", getEventById);
+router.get("/:id", optionalAuthenticate, getEventById);
 
 router.put(
   "/:id",

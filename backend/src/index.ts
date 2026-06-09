@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "path";
 import http from "http";
 import { initSocket } from "./socket";
+import prisma from "./lib/prisma";
 
 
 const app = express();
@@ -40,8 +41,22 @@ app.get("/", (req, res) => {
 app.get(
   "/api/profile",
   authenticate,
-  (req: AuthRequest, res) => {
-    res.json(req.user);
+  async (req: AuthRequest, res) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          selfieUrl: true,
+        },
+      });
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
   }
 );
 

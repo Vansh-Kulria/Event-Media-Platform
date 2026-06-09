@@ -7,44 +7,70 @@ import { findMatchingPhotos }
 from "../services/faceMatch.service";
 import sharp from "sharp";
 import path from "path";
+import fs from "fs";
 import { getIO } from "../socket";
+import { uploadToCloudinary } from "../services/cloudinary.service";
 
+const optimizeImage = async (filePath: string): Promise<string> => {
+    const ext = path.extname(filePath).toLowerCase();
+    // Only optimize images
+    if (![".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
+        return filePath;
+    }
+    const tempPath = filePath + "-temp";
+    await sharp(filePath)
+        .resize(1920, 1080, { fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toFile(tempPath);
+    
+    fs.unlinkSync(filePath);
+    const newPath = filePath.substring(0, filePath.length - ext.length) + ".jpg";
+    fs.renameSync(tempPath, newPath);
+    return newPath;
+};
 
 export const uploadMedia = async (
     req: AuthRequest,
     res: Response
 ) => {
     try {
-
-        // ******************************
-        console.log("BODY:", req.body);
-        console.log("RAW TAGS:", req.body.tags);
-
-        let tags: string[] = [];
-
-        if (req.body.tags) {
-            tags = req.body.tags.split(",");
-        } else {
-            tags = await generateTags(req.file!.path);
-        }
-
-        console.log("PARSED TAGS:", tags);
-
-        // *******************************
-
-
         if (!req.file) {
             return res.status(400).json({
                 message: "No file uploaded",
             });
         }
 
+        let finalPath = req.file.path;
+        try {
+            finalPath = await optimizeImage(req.file.path);
+        } catch (err) {
+            console.error("Optimization failed for", req.file.path, err);
+        }
+
+        let tags: string[] = [];
+        if (req.body.tags) {
+            tags = req.body.tags.split(",");
+        } else {
+            tags = await generateTags(finalPath);
+        }
+
         const { eventId } = req.body;
+        const filename = path.basename(finalPath);
+
+        let mediaUrl = `/uploads/${filename}`;
+        const cloudinaryUrl = await uploadToCloudinary(finalPath);
+        if (cloudinaryUrl) {
+            mediaUrl = cloudinaryUrl;
+        }
+
+        const ext = path.extname(finalPath).toLowerCase();
+        const isVideo = [".mp4", ".mov", ".webm", ".avi", ".mkv"].includes(ext);
+        const mediaType = isVideo ? "VIDEO" : "IMAGE";
 
         const media = await prisma.media.create({
             data: {
-                url: `/uploads/${req.file.filename}`,
-                type: MediaType.IMAGE,
+                url: mediaUrl,
+                type: mediaType as any,
                 eventId,
                 uploadedById: req.user!.userId,
                 tags,
@@ -61,27 +87,127 @@ export const uploadMedia = async (
     }
 };
 
+export const uploadMediaBulk = async (
+    req: AuthRequest,
+    res: Response
+) => {
+    try {
+        const files = req.files as Express.Multer.File[];
+        if (!files || files.length === 0) {
+            return res.status(400).json({
+                message: "No files uploaded",
+            });
+        }
+
+        const { eventId } = req.body;
+        if (!eventId) {
+            return res.status(400).json({
+                message: "eventId is required",
+            });
+        }
+
+        const createdMedia = [];
+
+        for (const file of files) {
+            let finalPath = file.path;
+            try {
+                finalPath = await optimizeImage(file.path);
+            } catch (err) {
+                console.error("Optimization failed for", file.path, err);
+            }
+
+            let tags: string[] = [];
+            if (req.body.tags) {
+                tags = req.body.tags.split(",");
+            } else {
+                tags = await generateTags(finalPath);
+            }
+
+            const filename = path.basename(finalPath);
+
+            let mediaUrl = `/uploads/${filename}`;
+            const cloudinaryUrl = await uploadToCloudinary(finalPath);
+            if (cloudinaryUrl) {
+                mediaUrl = cloudinaryUrl;
+            }
+
+            const ext = path.extname(finalPath).toLowerCase();
+            const isVideo = [".mp4", ".mov", ".webm", ".avi", ".mkv"].includes(ext);
+            const mediaType = isVideo ? "VIDEO" : "IMAGE";
+
+            const media = await prisma.media.create({
+                data: {
+                    url: mediaUrl,
+                    type: mediaType as any,
+                    eventId,
+                    uploadedById: req.user!.userId,
+                    tags,
+                },
+            });
+
+            createdMedia.push(media);
+        }
+
+        res.status(201).json(createdMedia);
+    } catch (error) {
+        console.error("Bulk upload failed:", error);
+        res.status(500).json({
+            message: "Bulk upload failed",
+        });
+    }
+};
+
 interface EventParams {
     eventId: string;
 }
 
 export const getEventMedia = async (
-    req: Request<EventParams>,
+    req: AuthRequest,
     res: Response
 ) => {
     try {
-        const eventId = req.params.eventId;
+        const eventId = req.params.eventId as string;
 
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+        });
+
+        if (!event) {
+            return res.status(404).json({
+                message: "Event not found",
+            });
+        }
+
+        if (!event.isPublic) {
+            const canSeePrivate = req.user && ["ADMIN", "PHOTOGRAPHER", "MEMBER"].includes(req.user.role);
+            if (!canSeePrivate) {
+                return res.status(403).json({
+                    message: "Access forbidden. Private event.",
+                });
+            }
+        }
+
+        const userId = req.user?.userId;
         const media = await prisma.media.findMany({
             where: {
                 eventId,
+            },
+            include: {
+                likes: true,
+                favorites: true,
             },
             orderBy: {
                 createdAt: "desc",
             },
         });
 
-        res.json(media);
+        const result = media.map(item => ({
+            ...item,
+            likedByCurrentUser: userId ? item.likes.some(l => l.userId === userId) : false,
+            favoritedByCurrentUser: userId ? item.favorites.some(f => f.userId === userId) : false,
+        }));
+
+        res.json(result);
     } catch (error) {
         console.error(error);
 
@@ -111,48 +237,60 @@ export const deleteMedia = async (
         }
 
         if (
-            media.uploadedById !== req.user!.userId
+            media.uploadedById !== req.user!.userId &&
+            req.user!.role !== "ADMIN"
         ) {
             return res.status(403).json({
                 message: "Forbidden",
             });
         }
 
-await prisma.like.deleteMany({
-  where: {
-    mediaId,
-  },
-});
+        await prisma.like.deleteMany({
+            where: {
+                mediaId,
+            },
+        });
 
-await prisma.comment.deleteMany({
-  where: {
-    mediaId,
-  },
-});
+        await prisma.comment.deleteMany({
+            where: {
+                mediaId,
+            },
+        });
 
-await prisma.favorite.deleteMany({
-  where: {
-    mediaId,
-  },
-});
+        await prisma.favorite.deleteMany({
+            where: {
+                mediaId,
+            },
+        });
 
-await prisma.mediaTag.deleteMany({
-  where: {
-    mediaId,
-  },
-});
+        await prisma.mediaTag.deleteMany({
+            where: {
+                mediaId,
+            },
+        });
 
-await prisma.faceMatch.deleteMany({
-  where: {
-    mediaId,
-  },
-});
+        await prisma.faceMatch.deleteMany({
+            where: {
+                mediaId,
+            },
+        });
 
-await prisma.media.delete({
-  where: {
-    id: mediaId,
-  },
-});
+        // Delete file from disk if it exists locally
+        const filename = path.basename(media.url);
+        const filePath = path.join(__dirname, "../../uploads", filename);
+        try {
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        } catch (err) {
+            console.error(`Failed to delete local file ${filePath}`, err);
+        }
+
+        await prisma.media.delete({
+            where: {
+                id: mediaId,
+            },
+        });
 
         res.json({
             message: "Media deleted successfully",
@@ -520,11 +658,25 @@ export const getMyFavorites = async (
                     userId,
                 },
                 include: {
-                    media: true,
+                    media: {
+                        include: {
+                            likes: true,
+                            favorites: true,
+                        }
+                    },
                 },
             });
 
-        res.json(favorites);
+        const result = favorites.map(f => ({
+            ...f,
+            media: {
+                ...f.media,
+                likedByCurrentUser: f.media.likes.some(l => l.userId === userId),
+                favoritedByCurrentUser: true,
+            }
+        }));
+
+        res.json(result);
     } catch (error) {
         console.error(error);
 
@@ -610,11 +762,25 @@ export const getMyPhotos = async (
             },
 
             include: {
-                media: true,
+                media: {
+                    include: {
+                        likes: true,
+                        favorites: true,
+                    }
+                },
             },
         });
 
-        res.json(photos);
+        const result = photos.map(match => ({
+            ...match,
+            media: {
+                ...match.media,
+                likedByCurrentUser: match.media.likes.some(l => l.userId === userId),
+                favoritedByCurrentUser: match.media.favorites.some(f => f.userId === userId),
+            }
+        }));
+
+        res.json(result);
 
     } catch (error) {
         console.error(error);
@@ -637,12 +803,18 @@ export const uploadSelfie = async (
             });
         }
 
+        let selfieUrl = `/uploads/${req.file.filename}`;
+        const cloudinaryUrl = await uploadToCloudinary(req.file.path);
+        if (cloudinaryUrl) {
+            selfieUrl = cloudinaryUrl;
+        }
+
         const user = await prisma.user.update({
             where: {
                 id: req.user!.userId,
             },
             data: {
-                selfieUrl: `/uploads/${req.file.filename}`,
+                selfieUrl,
             },
         });
 
@@ -663,16 +835,16 @@ for (const matchPath of matches) {
     "/" + matchPath.replace(/\\/g, "/");
 
   // Skip the selfie itself
-  if (
-    normalizedPath ===
-    `/uploads/${req.file.filename}`
-  ) {
+  if (normalizedPath.includes(req.file.filename)) {
     continue;
   }
 
+  const filename = path.basename(matchPath);
   const media = await prisma.media.findFirst({
     where: {
-      url: normalizedPath,
+      url: {
+        contains: filename,
+      },
     },
   });
 
@@ -741,24 +913,50 @@ export const recognizeFace = async (
             });
         }
 
-        const media = await prisma.media.findMany();
+        // Clean up old matches for this user
+        await prisma.faceMatch.deleteMany({
+            where: {
+                userId,
+            },
+        });
+
+        const selfieBasename = path.basename(user.selfieUrl, path.extname(user.selfieUrl));
+        const uploadsDir = path.join(__dirname, "../../uploads");
+        const files = fs.readdirSync(uploadsDir);
+        const matchingFile = files.find(file => path.basename(file, path.extname(file)) === selfieBasename);
+        
+        if (!matchingFile) {
+            return res.status(400).json({
+                message: "Reference selfie local file not found on server disk",
+            });
+        }
+        const selfiePath = `uploads/${matchingFile}`;
 
         let matchesCreated = 0;
+        const matches = await findMatchingPhotos(selfiePath);
 
-        for (const photo of media) {
-            await prisma.faceMatch.upsert({
+        for (const matchPath of matches) {
+            const normalizedPath = "/" + matchPath.replace(/\\/g, "/");
+
+            if (normalizedPath.includes(selfieBasename)) {
+                continue;
+            }
+
+            const filename = path.basename(matchPath);
+            const mediaItem = await prisma.media.findFirst({
                 where: {
-                    userId_mediaId: {
-                        userId,
-                        mediaId: photo.id,
+                    url: {
+                        contains: filename,
                     },
                 },
-                update: {
-                    confidence: 0.95,
-                },
-                create: {
+            });
+
+            if (!mediaItem) continue;
+
+            await prisma.faceMatch.create({
+                data: {
                     userId,
-                    mediaId: photo.id,
+                    mediaId: mediaItem.id,
                     confidence: 0.95,
                 },
             });
@@ -937,17 +1135,23 @@ export const downloadMedia = async (
       media.url.replace("/", "")
     );
 
+    const userRole = req.user?.role || "GUEST";
+    const clubName = "Event Media Club";
+    const eventName = media.event.title;
+    const watermarkText = `${clubName} | ${eventName} | ${userRole}`;
+
     const watermark = `
-      <svg width="1000" height="200">
+      <svg width="1000" height="300">
         <text
           x="50%"
           y="50%"
           text-anchor="middle"
-          font-size="40"
+          font-size="36"
+          font-weight="bold"
           fill="white"
           opacity="0.4"
         >
-          ${media.event.title}
+          ${watermarkText}
         </text>
       </svg>
     `;
@@ -1016,4 +1220,120 @@ export const shareMedia = async (
       message: "Failed to share media",
     });
   }
+};
+
+export const searchUsers = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const q = (req.query.q as string) || "";
+
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+      take: 10,
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to search users",
+    });
+  }
+};
+
+export const deleteMediaBulk = async (
+    req: AuthRequest,
+    res: Response
+) => {
+    try {
+        const { mediaIds } = req.body;
+        if (!mediaIds || !Array.isArray(mediaIds) || mediaIds.length === 0) {
+            return res.status(400).json({
+                message: "mediaIds must be a non-empty array",
+            });
+        }
+
+        const mediaRecords = await prisma.media.findMany({
+            where: {
+                id: {
+                    in: mediaIds,
+                },
+            },
+        });
+
+        if (mediaRecords.length === 0) {
+            return res.status(404).json({
+                message: "No media found",
+            });
+        }
+
+        const isUserAdmin = req.user!.role === "ADMIN";
+        if (!isUserAdmin) {
+            const forbiddenMedia = mediaRecords.some(media => media.uploadedById !== req.user!.userId);
+            if (forbiddenMedia) {
+                return res.status(403).json({
+                    message: "Forbidden: You do not have permission to delete some of the selected media",
+                });
+            }
+        }
+
+        for (const media of mediaRecords) {
+            const mediaId = media.id;
+
+            await prisma.like.deleteMany({ where: { mediaId } });
+            await prisma.comment.deleteMany({ where: { mediaId } });
+            await prisma.favorite.deleteMany({ where: { mediaId } });
+            await prisma.mediaTag.deleteMany({ where: { mediaId } });
+            await prisma.faceMatch.deleteMany({ where: { mediaId } });
+
+            const filename = path.basename(media.url);
+            const filePath = path.join(__dirname, "../../uploads", filename);
+            try {
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            } catch (err) {
+                console.error(`Failed to delete local file ${filePath}`, err);
+            }
+        }
+
+        await prisma.media.deleteMany({
+            where: {
+                id: {
+                    in: mediaIds,
+                },
+            },
+        });
+
+        res.json({
+            message: `${mediaRecords.length} media deleted successfully`,
+        });
+    } catch (error) {
+        console.error("Bulk delete failed:", error);
+        res.status(500).json({
+            message: "Failed to delete media bulk",
+        });
+    }
 };

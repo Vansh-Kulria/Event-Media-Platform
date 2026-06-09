@@ -40,6 +40,11 @@ export const markAllRead =
     return response.data;
   };
 
+export const clearAllNotifications = async () => {
+  const response = await api.delete("/notifications");
+  return response.data;
+};
+
   export const tagUser = async (
   mediaId: string,
   userId: string

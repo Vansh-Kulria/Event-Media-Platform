@@ -109,3 +109,26 @@ export const markAllRead = async (
     });
   }
 };
+
+export const clearAllNotifications = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    await prisma.notification.deleteMany({
+      where: {
+        userId: req.user!.userId,
+      },
+    });
+
+    res.json({
+      message: "All notifications cleared",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to clear notifications",
+    });
+  }
+};
+

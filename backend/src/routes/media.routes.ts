@@ -2,13 +2,15 @@ import { Router } from "express";
 
 import upload from "../middleware/upload.middleware";
 
-import { authenticate }
+import { authenticate, optionalAuthenticate }
     from "../middleware/auth.middleware";
 
 import {
   uploadMedia,
+  uploadMediaBulk,
   getEventMedia,
   deleteMedia,
+  deleteMediaBulk,
   toggleLike,
   getLikesCount,
   getMediaById,
@@ -28,7 +30,7 @@ import {
   removeTag,
   downloadMedia,
   shareMedia,
-  
+  searchUsers,
 } from "../controllers/media.controller";
 
 const router = Router();
@@ -40,12 +42,25 @@ router.post(
     uploadMedia
 );
 
-router.get("/events/:eventId", getEventMedia);
+router.post(
+    "/upload-bulk",
+    authenticate,
+    upload.array("files", 20),
+    uploadMediaBulk
+);
+
+router.get("/events/:eventId", optionalAuthenticate, getEventMedia);
 
 router.delete(
     "/:id",
     authenticate,
     deleteMedia
+);
+
+router.post(
+    "/delete-bulk",
+    authenticate,
+    deleteMediaBulk
 );
 
 router.post(
@@ -65,6 +80,12 @@ router.get(
   "/my-photos",
   authenticate,
   getMyPhotos
+);
+
+router.get(
+  "/users/search",
+  authenticate,
+  searchUsers
 );
 
 router.post(

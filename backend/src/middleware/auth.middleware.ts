@@ -52,3 +52,32 @@ req.user = {
     });
   }
 };
+
+export const optionalAuthenticate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return next();
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return next();
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as CustomJwtPayload;
+
+    req.user = decoded;
+    next();
+  } catch {
+    next();
+  }
+};

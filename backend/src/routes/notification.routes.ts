@@ -4,6 +4,7 @@ import {
   markNotificationRead,
   getUnreadCount,
   markAllRead,
+  clearAllNotifications,
 } from "../controllers/notification.controller";
 
 import { authenticate }
@@ -33,6 +34,12 @@ router.patch(
   "/read-all",
   authenticate,
   markAllRead
+);
+
+router.delete(
+  "/",
+  authenticate,
+  clearAllNotifications
 );
 
 export default router;

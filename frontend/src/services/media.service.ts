@@ -23,6 +23,29 @@ export const uploadMedia = async (
   return response.data;
 };
 
+export const uploadMediaBulk = async (
+  eventId: string,
+  files: File[]
+) => {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+  formData.append("eventId", eventId);
+
+  const response = await api.post(
+    "/media/upload-bulk",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return response.data;
+};
+
 export const getEventMedia =
   async (eventId: string) => {
     const response = await api.get(
@@ -85,6 +108,18 @@ export const deleteMedia = async (
   return response.data;
 };
 
+export const deleteMediaBulk = async (
+  mediaIds: string[]
+) => {
+  const response = await api.post(
+    "/media/delete-bulk",
+    { mediaIds }
+  );
+
+  return response.data;
+};
+
+
 export const toggleFavorite = async (
   mediaId: string
 ) => {
@@ -134,4 +169,69 @@ export const getTaggedPhotos =
 
     return response.data;
   };
-  
+
+  export const uploadSelfie = async (
+  file: File
+) => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  const response = await api.post(
+    "/media/upload-selfie",
+    formData,
+    {
+      headers: {
+        "Content-Type":
+          "multipart/form-data",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const getMySelfie =
+  async () => {
+    const response =
+      await api.get(
+        "/media/my-selfie"
+      );
+
+    return response.data;
+  };
+
+export const recognizeFace =
+  async () => {
+    const response =
+      await api.post(
+        "/media/recognize-face"
+      );
+
+    return response.data;
+  };
+
+export const getMyPhotos =
+  async () => {
+    const response =
+      await api.get(
+        "/media/my-photos"
+      );
+
+    return response.data;
+  };
+
+export const searchUsers = async (q: string) => {
+  const response = await api.get(`/media/users/search?q=${encodeURIComponent(q)}`);
+  return response.data;
+};
+
+export const searchMedia = async (params: { tag?: string; event?: string; user?: string }) => {
+  const queryParts = [];
+  if (params.tag) queryParts.push(`tag=${encodeURIComponent(params.tag)}`);
+  if (params.event) queryParts.push(`event=${encodeURIComponent(params.event)}`);
+  if (params.user) queryParts.push(`user=${encodeURIComponent(params.user)}`);
+  const queryStr = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
+  const response = await api.get(`/media/search${queryStr}`);
+  return response.data;
+};

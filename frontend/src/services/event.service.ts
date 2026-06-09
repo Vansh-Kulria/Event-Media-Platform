@@ -1,7 +1,10 @@
 import api from "@/lib/axios";
 
-export const getEvents = async () => {
-  const response = await api.get("/events");
+export const getEvents = async (sortBy?: string, order?: string) => {
+  const params: any = {};
+  if (sortBy) params.sortBy = sortBy;
+  if (order) params.order = order;
+  const response = await api.get("/events", { params });
   return response.data;
 };
 

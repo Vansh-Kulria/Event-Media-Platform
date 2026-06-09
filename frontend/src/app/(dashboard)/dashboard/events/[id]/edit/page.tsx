@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   getEventById,
@@ -72,7 +73,7 @@ export default function EditEventPage({
         formData
       );
 
-      alert(
+      toast.success(
         "Event updated successfully"
       );
 
@@ -84,7 +85,7 @@ export default function EditEventPage({
     error.response?.data?.message ||
     "Failed to update event";
 
-  alert(message);
+  toast.error(message);
 }finally {
       setLoading(false);
     }

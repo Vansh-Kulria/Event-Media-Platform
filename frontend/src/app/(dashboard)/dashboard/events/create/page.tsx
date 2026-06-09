@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createEvent } from "@/services/event.service";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -27,12 +28,12 @@ export default function CreateEventPage() {
 
       await createEvent(formData);
 
-      alert("Event created successfully");
+      toast.success("Event created successfully");
 
       router.push("/dashboard/events");
     } catch (error) {
       console.error(error);
-      alert("Failed to create event");
+      toast.error("Failed to create event");
     } finally {
       setLoading(false);
     }

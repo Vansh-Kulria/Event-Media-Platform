@@ -8,7 +8,7 @@ export const register = async (
   res: Response
 ) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -28,11 +28,15 @@ export const register = async (
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const validRoles = ["ADMIN", "PHOTOGRAPHER", "MEMBER", "VIEWER"];
+    const userRole = role && validRoles.includes(role.toUpperCase()) ? role.toUpperCase() : "VIEWER";
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
+        role: userRole as any,
       },
     });
 

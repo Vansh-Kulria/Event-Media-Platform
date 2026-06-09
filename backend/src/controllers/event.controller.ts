@@ -41,7 +41,26 @@ export const getEvents = async (
   res: Response
 ) => {
   try {
+    const { sortBy, order } = req.query;
+
+    const canSeePrivate = req.user && ["ADMIN", "PHOTOGRAPHER", "MEMBER"].includes(req.user.role);
+    const where = canSeePrivate ? {} : { isPublic: true };
+
+    let orderBy: any = { createdAt: "desc" };
+
+    if (sortBy) {
+      const sortOrder = order === "asc" ? "asc" : "desc";
+      if (sortBy === "name") {
+        orderBy = { title: sortOrder };
+      } else if (sortBy === "date") {
+        orderBy = { eventDate: sortOrder };
+      } else if (sortBy === "category") {
+        orderBy = { category: sortOrder };
+      }
+    }
+
     const events = await prisma.event.findMany({
+      where,
       include: {
         createdBy: {
           select: {
@@ -51,9 +70,7 @@ export const getEvents = async (
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy,
     });
 
     res.json(events);
@@ -91,6 +108,15 @@ export const getEventById = async (
       return res.status(404).json({
         message: "Event not found",
       });
+    }
+
+    if (!event.isPublic) {
+      const canSeePrivate = req.user && ["ADMIN", "PHOTOGRAPHER", "MEMBER"].includes(req.user.role);
+      if (!canSeePrivate) {
+        return res.status(403).json({
+          message: "Access forbidden. Private event.",
+        });
+      }
     }
 
     res.json(event);
