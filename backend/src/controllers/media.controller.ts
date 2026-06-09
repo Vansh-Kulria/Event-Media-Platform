@@ -1205,8 +1205,8 @@ export const shareMedia = async (
       },
     });
 
-    const shareUrl =
-      `${req.protocol}://${req.get("host")}/api/media/${media.id}`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const shareUrl = `${frontendUrl}/shared/${media.id}`;
 
     res.json({
       shareUrl,

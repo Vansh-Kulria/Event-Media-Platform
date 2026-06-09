@@ -42,6 +42,9 @@ export default function MediaCard({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareData, setShareData] = useState<{ url: string; count: number }>({ url: "", count: 0 });
+  const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync state if props change
@@ -170,12 +173,20 @@ export default function MediaCard({
   const handleShare = async () => {
     try {
       const res = await api.get(`/media/${media.id}/share`);
-      navigator.clipboard.writeText(res.data.shareUrl);
-      toast.success(`Share link copied to clipboard! (Shared ${res.data.shareCount} times)`);
+      setShareData({ url: res.data.shareUrl, count: res.data.shareCount });
+      setShowShareModal(true);
+      setCopied(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to share");
     }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareData.url);
+    setCopied(true);
+    toast.success("Share link copied to clipboard!");
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const canDelete = user?.role === "ADMIN" || media.uploadedById === user?.id;
@@ -259,6 +270,20 @@ export default function MediaCard({
             </button>
           )}
         </div>
+
+        {/* AI Tags list */}
+        {media.tags && media.tags.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap gap-1 px-1">
+            {media.tags.map((tag: string) => (
+              <span
+                key={tag}
+                className="rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 dark:text-violet-300 px-2.5 py-0.5 text-[9px] font-bold tracking-wide uppercase"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Social Actions row */}
         <div className="mt-3.5 flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3.5 px-1">
@@ -432,6 +457,97 @@ export default function MediaCard({
             {/* Comments List & Input Form */}
             <div className="mt-1">
               <MediaComments mediaId={media.id} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Social Share Modal Overlay */}
+      {showShareModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowShareModal(false)}
+        >
+          <div 
+            className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                🔗 Share Media
+              </h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-950 dark:hover:text-white transition cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Direct Link Copy */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Direct Link
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={shareData.url}
+                  className="flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 outline-none select-all"
+                />
+                <button
+                  onClick={copyToClipboard}
+                  className="rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-bold text-white transition hover:from-violet-500 hover:to-indigo-500 cursor-pointer min-w-[80px]"
+                >
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            {/* Social Share Buttons */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                Share To Socials
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent("Check out this photo: " + shareData.url)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/40 p-2.5 text-center text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500/30 transition flex flex-col items-center gap-1 cursor-pointer"
+                >
+                  <span className="text-lg">💬</span>
+                  WhatsApp
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareData.url)}&text=${encodeURIComponent("Check out this media item!")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/40 p-2.5 text-center text-xs font-semibold hover:bg-slate-500/10 hover:text-sky-400 hover:border-sky-400/30 transition flex flex-col items-center gap-1 cursor-pointer"
+                >
+                  <span className="text-lg">🐦</span>
+                  Twitter / X
+                </a>
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/40 p-2.5 text-center text-xs font-semibold hover:bg-blue-500/10 hover:text-blue-500 hover:border-blue-500/30 transition flex flex-col items-center gap-1 cursor-pointer"
+                >
+                  <span className="text-lg">👥</span>
+                  Facebook
+                </a>
+              </div>
+            </div>
+
+            {/* Share Stats */}
+            <div className="border-t border-slate-100 dark:border-white/5 pt-3 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+              <span>📊 Total Share Count</span>
+              <span className="font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded">
+                {shareData.count} shares
+              </span>
             </div>
           </div>
         </div>

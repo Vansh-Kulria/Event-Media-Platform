@@ -142,6 +142,11 @@ router.get(
 );
 
 router.get(
+  "/:mediaId/public",
+  getMediaById
+);
+
+router.get(
   "/:mediaId",
   authenticate,
   getMediaById
