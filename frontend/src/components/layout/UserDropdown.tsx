@@ -32,7 +32,7 @@ export default function UserDropdown() {
       >
         {user?.selfieUrl ? (
           <img
-            src={`http://localhost:5000${user.selfieUrl}`}
+            src={user.selfieUrl.startsWith("http") ? user.selfieUrl : `http://localhost:5000${user.selfieUrl}`}
             alt=""
             className="h-6 w-6 rounded-full object-cover border border-violet-500/50"
           />
