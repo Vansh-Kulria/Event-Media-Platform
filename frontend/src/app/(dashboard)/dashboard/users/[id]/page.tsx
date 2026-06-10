@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/axios";
 import MediaCard from "@/components/media/MediaCard";
+import { useAuthStore } from "@/store/auth-store";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -21,6 +22,7 @@ export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
+  const { user: loggedInUser } = useAuthStore();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -147,6 +149,14 @@ export default function UserProfilePage() {
                 <span className="inline-flex self-center items-center gap-1 rounded-full bg-violet-500/10 border border-violet-500/20 px-3 py-1 text-[10px] font-bold text-violet-500 dark:text-violet-400 uppercase tracking-wider">
                   <Shield className="h-3 w-3" /> {user.role}
                 </span>
+                {loggedInUser?.id === user.id && (
+                  <Link
+                    href="/dashboard/selfie"
+                    className="inline-flex self-center items-center gap-1.5 rounded-full bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-[10px] font-bold text-white px-3.5 py-1 shadow-md shadow-violet-950/20 hover:scale-[1.03] transition duration-200 cursor-pointer"
+                  >
+                    📸 Update Selfie
+                  </Link>
+                )}
               </div>
               
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-y-1 gap-x-4 text-xs text-slate-500 dark:text-slate-400 font-medium">

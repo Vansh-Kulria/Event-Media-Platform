@@ -57,10 +57,10 @@ export default function UserDropdown() {
           </div>
 
           <button
-            onClick={() => { setOpen(false); router.push("/dashboard/selfie"); }}
+            onClick={() => { setOpen(false); router.push(`/dashboard/users/${user?.id}`); }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition text-left cursor-pointer"
           >
-            👤 Profile & Selfie
+            👤 View Profile
           </button>
 
           <button
