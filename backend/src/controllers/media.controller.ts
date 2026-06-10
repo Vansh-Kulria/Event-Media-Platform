@@ -1130,10 +1130,28 @@ export const downloadMedia = async (
       });
     }
 
-    const imagePath = path.join(
-      process.cwd(),
-      media.url.replace("/", "")
-    );
+    let inputBuffer: Buffer;
+    if (media.url.startsWith("http")) {
+      const response = await fetch(media.url);
+      if (!response.ok) throw new Error("Failed to fetch media from Cloudinary");
+      const arrayBuffer = await response.arrayBuffer();
+      inputBuffer = Buffer.from(arrayBuffer);
+    } else {
+      const imagePath = path.join(
+        process.cwd(),
+        media.url.replace(/^\//, "")
+      );
+      inputBuffer = fs.readFileSync(imagePath);
+    }
+
+    if (media.type === "VIDEO") {
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=${media.id}.mp4`
+      );
+      res.setHeader("Content-Type", "video/mp4");
+      return res.send(inputBuffer);
+    }
 
     const userRole = req.user?.role || "GUEST";
     const clubName = "Event Media Club";
@@ -1156,7 +1174,7 @@ export const downloadMedia = async (
       </svg>
     `;
 
-    const output = await sharp(imagePath)
+    const output = await sharp(inputBuffer)
       .composite([
         {
           input: Buffer.from(watermark),

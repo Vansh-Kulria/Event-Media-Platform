@@ -18,9 +18,13 @@ export function useSocket() {
       return;
     }
 
+    // Extract base URL by removing /api if present
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+    const socketUrl = apiUrl.replace(/\/api\/?$/, "");
+
     // Connect to the socket server
-    const socket = io("http://localhost:5000", {
-      transports: ["websocket"],
+    const socket = io(socketUrl, {
+      transports: ["websocket", "polling"],
     });
 
     socketRef.current = socket;
