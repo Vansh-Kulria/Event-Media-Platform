@@ -128,7 +128,7 @@ export default function UserProfilePage() {
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 lg:gap-8">
           {/* Large Avatar */}
           <div className="flex h-24 w-24 lg:h-28 lg:w-28 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-3xl font-black text-white uppercase shadow-lg border-2 border-violet-500/30">
-            {user.selfieUrl ? (
+            {user.selfieUrl && user.selfieUrl !== "null" && user.selfieUrl !== "undefined" && user.selfieUrl.trim() !== "" ? (
               <img
                 src={user.selfieUrl.startsWith("http") ? user.selfieUrl : `http://localhost:5000${user.selfieUrl}`}
                 alt={user.name}

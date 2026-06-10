@@ -86,7 +86,7 @@ export default function SelfiePage() {
         {/* Selfie Status Card */}
         <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-xl flex flex-col items-center justify-center text-center">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Current Reference Selfie</h2>
-          {currentSelfie ? (
+          {currentSelfie && currentSelfie !== "null" && currentSelfie !== "undefined" && currentSelfie.trim() !== "" ? (
             <div className="space-y-4">
               <div className="relative h-44 w-44 rounded-full overflow-hidden border-2 border-violet-500 shadow-xl shadow-violet-500/10 mx-auto">
                 <img

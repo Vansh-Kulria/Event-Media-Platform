@@ -202,7 +202,7 @@ export default function MediaCard({
               href={`/dashboard/users/${media.uploadedBy.id}`} 
               className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-tr from-violet-500 to-indigo-500 text-[11px] font-extrabold text-white uppercase shadow-inner cursor-pointer hover:opacity-90 transition"
             >
-              {media.uploadedBy.selfieUrl ? (
+              {media.uploadedBy.selfieUrl && media.uploadedBy.selfieUrl !== "null" && media.uploadedBy.selfieUrl !== "undefined" && media.uploadedBy.selfieUrl.trim() !== "" ? (
                 <img 
                   src={media.uploadedBy.selfieUrl.startsWith("http") ? media.uploadedBy.selfieUrl : `http://localhost:5000${media.uploadedBy.selfieUrl}`} 
                   alt={media.uploadedBy.name} 
