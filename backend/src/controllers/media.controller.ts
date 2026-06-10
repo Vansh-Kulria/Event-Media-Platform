@@ -10,6 +10,7 @@ import path from "path";
 import fs from "fs";
 import { getIO } from "../socket";
 import { uploadToCloudinary } from "../services/cloudinary.service";
+import { ROBOTO_BASE64 } from "../utils/font";
 
 const optimizeImage = async (filePath: string): Promise<string> => {
     const ext = path.extname(filePath).toLowerCase();
@@ -1168,12 +1169,18 @@ export const downloadMedia = async (
 
     const watermark = `
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          @font-face {
+            font-family: 'RobotoEmbedded';
+            src: url('data:font/ttf;base64,${ROBOTO_BASE64}') format('truetype');
+          }
+        </style>
         <text
           x="50%"
           y="50%"
           text-anchor="middle"
           dominant-baseline="middle"
-          font-family="Arial, Helvetica, sans-serif"
+          font-family="RobotoEmbedded, Arial, sans-serif"
           font-size="${fontSize}"
           font-weight="bold"
           fill="white"
