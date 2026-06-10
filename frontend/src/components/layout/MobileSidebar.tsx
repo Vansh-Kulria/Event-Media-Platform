@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
@@ -17,7 +18,12 @@ const links = [
 
 export default function MobileSidebar() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -29,19 +35,19 @@ export default function MobileSidebar() {
         <Menu className="h-5 w-5" />
       </button>
 
-      {open && (
-        <>
+      {open && mounted && createPortal(
+        <div className="relative z-50">
           {/* Backdrop Overlay */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setOpen(false)}
           />
 
           {/* Drawer Menu */}
-          <div className="fixed left-0 top-0 h-full w-72 bg-black/80 dark:bg-slate-950/80 backdrop-blur-md border-r border-slate-200 dark:border-white/10 z-50 p-6 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300">
+          <div className="fixed left-0 top-0 h-screen w-72 bg-black/90 dark:bg-slate-950/95 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 p-6 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300 overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4 mb-6">
-              <h2 className="text-lg font-extrabold bg-linear-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
+              <h2 className="text-lg font-extrabold bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
                 ⚡ EventMedia
               </h2>
               <button
@@ -63,8 +69,8 @@ export default function MobileSidebar() {
                     onClick={() => setOpen(false)}
                     className={`block rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 cursor-pointer ${
                       active
-                        ? "bg-linear-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/20"
-                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/20"
+                        : "text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {link.name}
@@ -74,13 +80,14 @@ export default function MobileSidebar() {
             </nav>
 
             {/* Footer */}
-            <div className="border-t border-slate-100 dark:border-white/5 pt-4 text-center">
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+            <div className="border-t border-slate-100 dark:border-white/5 pt-4 text-center mt-6">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                 Event Media Platform v1.0
               </p>
             </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
     </>
   );
