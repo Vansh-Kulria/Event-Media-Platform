@@ -167,6 +167,14 @@ const getEventMedia = async (req, res) => {
             include: {
                 likes: true,
                 favorites: true,
+                uploadedBy: {
+                    select: {
+                        id: true,
+                        name: true,
+                        role: true,
+                        selfieUrl: true,
+                    },
+                },
             },
             orderBy: {
                 createdAt: "desc",
@@ -543,6 +551,14 @@ const getMyFavorites = async (req, res) => {
                     include: {
                         likes: true,
                         favorites: true,
+                        uploadedBy: {
+                            select: {
+                                id: true,
+                                name: true,
+                                role: true,
+                                selfieUrl: true,
+                            },
+                        },
                     }
                 },
             },
@@ -606,6 +622,8 @@ const searchMedia = async (req, res) => {
                     select: {
                         id: true,
                         name: true,
+                        role: true,
+                        selfieUrl: true,
                     },
                 },
             },
@@ -632,6 +650,14 @@ const getMyPhotos = async (req, res) => {
                     include: {
                         likes: true,
                         favorites: true,
+                        uploadedBy: {
+                            select: {
+                                id: true,
+                                name: true,
+                                role: true,
+                                selfieUrl: true,
+                            },
+                        },
                     }
                 },
             },

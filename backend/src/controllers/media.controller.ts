@@ -198,6 +198,14 @@ export const getEventMedia = async (
             include: {
                 likes: true,
                 favorites: true,
+                uploadedBy: {
+                    select: {
+                        id: true,
+                        name: true,
+                        role: true,
+                        selfieUrl: true,
+                    },
+                },
             },
             orderBy: {
                 createdAt: "desc",
@@ -665,6 +673,14 @@ export const getMyFavorites = async (
                         include: {
                             likes: true,
                             favorites: true,
+                            uploadedBy: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    role: true,
+                                    selfieUrl: true,
+                                },
+                            },
                         }
                     },
                 },
@@ -737,6 +753,8 @@ export const searchMedia = async (
                     select: {
                         id: true,
                         name: true,
+                        role: true,
+                        selfieUrl: true,
                     },
                 },
             },
@@ -769,6 +787,14 @@ export const getMyPhotos = async (
                     include: {
                         likes: true,
                         favorites: true,
+                        uploadedBy: {
+                            select: {
+                                id: true,
+                                name: true,
+                                role: true,
+                                selfieUrl: true,
+                            },
+                        },
                     }
                 },
             },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import {
   toggleLike,
   getLikesCount,
@@ -194,6 +195,37 @@ export default function MediaCard({
   return (
     <>
       <div className="group relative flex flex-col h-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-white/20">
+        {/* Uploader info (Social Header) */}
+        {media.uploadedBy && (
+          <div className="flex items-center gap-2.5 mb-3 px-0.5">
+            <Link 
+              href={`/dashboard/users/${media.uploadedBy.id}`} 
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-tr from-violet-500 to-indigo-500 text-[11px] font-extrabold text-white uppercase shadow-inner cursor-pointer hover:opacity-90 transition"
+            >
+              {media.uploadedBy.selfieUrl ? (
+                <img 
+                  src={media.uploadedBy.selfieUrl.startsWith("http") ? media.uploadedBy.selfieUrl : `http://localhost:5000${media.uploadedBy.selfieUrl}`} 
+                  alt={media.uploadedBy.name} 
+                  className="h-full w-full rounded-full object-cover" 
+                />
+              ) : (
+                media.uploadedBy.name.charAt(0)
+              )}
+            </Link>
+            <div className="flex flex-col">
+              <Link 
+                href={`/dashboard/users/${media.uploadedBy.id}`} 
+                className="text-xs font-extrabold text-slate-800 dark:text-slate-200 hover:text-violet-500 dark:hover:text-violet-400 transition cursor-pointer"
+              >
+                {media.uploadedBy.name}
+              </Link>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                {media.uploadedBy.role || "MEMBER"}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Thumbnail (opens Lightbox on click) */}
         <div 
           onClick={() => setIsLightboxOpen(true)}
