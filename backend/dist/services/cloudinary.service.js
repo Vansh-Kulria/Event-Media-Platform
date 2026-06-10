@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadToCloudinary = exports.isCloudinaryConfigured = void 0;
 const cloudinary_1 = require("cloudinary");
 const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
 exports.isCloudinaryConfigured = !!(process.env.CLOUDINARY_CLOUD_NAME &&
     process.env.CLOUDINARY_API_KEY &&
@@ -22,9 +23,11 @@ const uploadToCloudinary = async (filePath) => {
         return null;
     }
     try {
+        const filename = path_1.default.basename(filePath, path_1.default.extname(filePath));
         const result = await cloudinary_1.v2.uploader.upload(filePath, {
             folder: "event-media-platform",
             resource_type: "auto",
+            public_id: filename,
         });
         return result.secure_url;
     }

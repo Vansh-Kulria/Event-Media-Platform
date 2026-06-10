@@ -12,6 +12,8 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const socket_1 = require("../socket");
 const cloudinary_service_1 = require("../services/cloudinary.service");
+// @ts-ignore
+const text_to_svg_1 = __importDefault(require("text-to-svg"));
 const optimizeImage = async (filePath) => {
     const ext = path_1.default.extname(filePath).toLowerCase();
     // Only optimize images
@@ -659,12 +661,17 @@ const uploadSelfie = async (req, res) => {
                 message: "No selfie uploaded",
             });
         }
+        let selfieUrl = `/uploads/${req.file.filename}`;
+        const cloudinaryUrl = await (0, cloudinary_service_1.uploadToCloudinary)(req.file.path);
+        if (cloudinaryUrl) {
+            selfieUrl = cloudinaryUrl;
+        }
         const user = await prisma_1.default.user.update({
             where: {
                 id: req.user.userId,
             },
             data: {
-                selfieUrl: `/uploads/${req.file.filename}`,
+                selfieUrl,
             },
         });
         res.json({
@@ -677,8 +684,7 @@ const uploadSelfie = async (req, res) => {
         for (const matchPath of matches) {
             const normalizedPath = "/" + matchPath.replace(/\\/g, "/");
             // Skip the selfie itself
-            if (normalizedPath ===
-                `/uploads/${req.file.filename}`) {
+            if (normalizedPath.includes(req.file.filename)) {
                 continue;
             }
             const filename = path_1.default.basename(matchPath);
@@ -746,14 +752,21 @@ const recognizeFace = async (req, res) => {
                 userId,
             },
         });
-        const selfiePath = user.selfieUrl.startsWith("/")
-            ? user.selfieUrl.substring(1)
-            : user.selfieUrl;
+        const selfieBasename = path_1.default.basename(user.selfieUrl, path_1.default.extname(user.selfieUrl));
+        const uploadsDir = path_1.default.join(__dirname, "../../uploads");
+        const files = fs_1.default.readdirSync(uploadsDir);
+        const matchingFile = files.find(file => path_1.default.basename(file, path_1.default.extname(file)) === selfieBasename);
+        if (!matchingFile) {
+            return res.status(400).json({
+                message: "Reference selfie local file not found on server disk",
+            });
+        }
+        const selfiePath = `uploads/${matchingFile}`;
         let matchesCreated = 0;
         const matches = await (0, faceMatch_service_1.findMatchingPhotos)(selfiePath);
         for (const matchPath of matches) {
             const normalizedPath = "/" + matchPath.replace(/\\/g, "/");
-            if (normalizedPath === user.selfieUrl) {
+            if (normalizedPath.includes(selfieBasename)) {
                 continue;
             }
             const filename = path_1.default.basename(matchPath);
@@ -907,27 +920,53 @@ const downloadMedia = async (req, res) => {
                 message: "Media not found",
             });
         }
-        const imagePath = path_1.default.join(process.cwd(), media.url.replace("/", ""));
+        let inputBuffer;
+        if (media.url.startsWith("http")) {
+            const response = await fetch(media.url);
+            if (!response.ok)
+                throw new Error("Failed to fetch media from Cloudinary");
+            const arrayBuffer = await response.arrayBuffer();
+            inputBuffer = Buffer.from(arrayBuffer);
+        }
+        else {
+            const imagePath = path_1.default.join(process.cwd(), media.url.replace(/^\//, ""));
+            inputBuffer = fs_1.default.readFileSync(imagePath);
+        }
+        if (media.type === "VIDEO") {
+            res.setHeader("Content-Disposition", `attachment; filename=${media.id}.mp4`);
+            res.setHeader("Content-Type", "video/mp4");
+            return res.send(inputBuffer);
+        }
         const userRole = req.user?.role || "GUEST";
         const clubName = "Event Media Club";
         const eventName = media.event.title;
         const watermarkText = `${clubName} | ${eventName} | ${userRole}`;
+        const image = (0, sharp_1.default)(inputBuffer);
+        const metadata = await image.metadata();
+        const width = metadata.width || 1000;
+        const height = metadata.height || 1000;
+        // Dynamically scale text size based on image width
+        const fontSize = Math.max(24, Math.floor(width / 25));
+        // Load custom font using text-to-svg
+        const fontPath = path_1.default.join(__dirname, "../../fonts/Roboto-Regular.ttf");
+        const textToSVG = text_to_svg_1.default.loadSync(fontPath);
+        // Generate path element for the text
+        const pathData = textToSVG.getPath(watermarkText, {
+            x: width / 2,
+            y: height / 2,
+            fontSize: fontSize,
+            anchor: "center middle",
+            attributes: {
+                fill: "white",
+                opacity: "0.6",
+            },
+        });
         const watermark = `
-      <svg width="1000" height="300">
-        <text
-          x="50%"
-          y="50%"
-          text-anchor="middle"
-          font-size="36"
-          font-weight="bold"
-          fill="white"
-          opacity="0.4"
-        >
-          ${watermarkText}
-        </text>
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        ${pathData}
       </svg>
     `;
-        const output = await (0, sharp_1.default)(imagePath)
+        const output = await image
             .composite([
             {
                 input: Buffer.from(watermark),
@@ -961,7 +1000,9 @@ const shareMedia = async (req, res) => {
                 },
             },
         });
-        const shareUrl = `${req.protocol}://${req.get("host")}/api/media/${media.id}`;
+        const rawFrontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const cleanFrontendUrl = rawFrontendUrl.endsWith("/") ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
+        const shareUrl = `${cleanFrontendUrl}/shared/${media.id}`;
         res.json({
             shareUrl,
             shareCount: media.shareCount,

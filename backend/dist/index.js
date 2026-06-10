@@ -21,8 +21,10 @@ const event_routes_1 = __importDefault(require("./routes/event.routes"));
 const media_routes_1 = __importDefault(require("./routes/media.routes"));
 const notification_routes_1 = __importDefault(require("./routes/notification.routes"));
 const analytics_routes_1 = __importDefault(require("./routes/analytics.routes"));
+const rawFrontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+const cleanFrontendUrl = rawFrontendUrl.endsWith("/") ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
 app.use((0, cors_1.default)({
-    origin: "http://localhost:3000",
+    origin: [cleanFrontendUrl, `${cleanFrontendUrl}/`],
     credentials: true,
 }));
 app.use(express_1.default.json());

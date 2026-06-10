@@ -7,7 +7,13 @@ const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const findMatchingPhotos = async (selfiePath) => {
     try {
         const { stdout } = await execAsync(`python python/face_match.py "${selfiePath}" uploads`);
-        return JSON.parse(stdout.trim());
+        const lines = stdout.trim().split(/\r?\n/);
+        const jsonLine = lines.find(line => line.trim().startsWith("[") && line.trim().endsWith("]"));
+        if (!jsonLine) {
+            console.error("No JSON array found in face matching output:", stdout);
+            return [];
+        }
+        return JSON.parse(jsonLine.trim());
     }
     catch (err) {
         console.error("DeepFace Python execution failed, returning no matches:", err);

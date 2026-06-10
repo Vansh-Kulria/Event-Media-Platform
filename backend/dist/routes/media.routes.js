@@ -27,6 +27,7 @@ router.get("/tagged/me", auth_middleware_1.authenticate, media_controller_1.getT
 router.delete("/:mediaId/tag", auth_middleware_1.authenticate, media_controller_1.removeTag);
 router.get("/:mediaId/download", auth_middleware_1.authenticate, media_controller_1.downloadMedia);
 router.get("/:mediaId/share", media_controller_1.shareMedia);
+router.get("/:mediaId/public", media_controller_1.getMediaById);
 router.get("/:mediaId", auth_middleware_1.authenticate, media_controller_1.getMediaById);
 router.post("/:mediaId/comment", auth_middleware_1.authenticate, media_controller_1.addComment);
 router.get("/:mediaId/comments", media_controller_1.getComments);

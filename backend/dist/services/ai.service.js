@@ -4,8 +4,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateTags = void 0;
+const child_process_1 = require("child_process");
+const util_1 = require("util");
 const path_1 = __importDefault(require("path"));
+const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const generateTags = async (filePath) => {
+    let aiTags = [];
+    try {
+        const { stdout } = await execAsync(`python python/tag_image.py "${filePath}"`);
+        const lines = stdout.trim().split(/\r?\n/);
+        const jsonLine = lines.find(line => line.trim().startsWith("[") && line.trim().endsWith("]"));
+        if (jsonLine) {
+            aiTags = JSON.parse(jsonLine.trim());
+        }
+    }
+    catch (err) {
+        console.error("AI image tagging execution failed, using fallback:", err);
+    }
     const filename = path_1.default.basename(filePath).toLowerCase();
     const tagMapping = {
         mountain: ["mountains", "nature", "landscape", "outdoor"],
@@ -27,20 +42,19 @@ const generateTags = async (filePath) => {
         forest: ["forest", "trees", "nature", "outdoor"],
         tree: ["trees", "nature", "outdoor"],
     };
+    const filenameTags = [];
     for (const [keyword, tags] of Object.entries(tagMapping)) {
         if (filename.includes(keyword)) {
-            return tags;
+            filenameTags.push(...tags);
         }
     }
-    const combinations = [
-        ["event", "gathering", "people", "celebration"],
-        ["portrait", "candid", "people", "indoor"],
-        ["landscape", "outdoor", "nature", "scenery"],
-        ["action", "event", "sports", "crowd"],
-        ["concert", "stage", "performance", "music"],
-        ["group", "people", "friends", "smile"],
-    ];
-    const randomIndex = Math.floor(Math.random() * combinations.length);
-    return combinations[randomIndex];
+    const allTagsSet = new Set();
+    aiTags.forEach(t => allTagsSet.add(t.toLowerCase()));
+    filenameTags.forEach(t => allTagsSet.add(t.toLowerCase()));
+    if (allTagsSet.size === 0) {
+        allTagsSet.add("photo");
+        allTagsSet.add("event");
+    }
+    return Array.from(allTagsSet);
 };
 exports.generateTags = generateTags;

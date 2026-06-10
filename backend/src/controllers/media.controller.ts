@@ -10,7 +10,9 @@ import path from "path";
 import fs from "fs";
 import { getIO } from "../socket";
 import { uploadToCloudinary } from "../services/cloudinary.service";
-import { ROBOTO_BASE64 } from "../utils/font";
+// @ts-ignore
+import TextToSVG from "text-to-svg";
+
 
 const optimizeImage = async (filePath: string): Promise<string> => {
     const ext = path.extname(filePath).toLowerCase();
@@ -1167,27 +1169,25 @@ export const downloadMedia = async (
     // Dynamically scale text size based on image width
     const fontSize = Math.max(24, Math.floor(width / 25));
 
+    // Load custom font using text-to-svg
+    const fontPath = path.join(__dirname, "../../fonts/Roboto-Regular.ttf");
+    const textToSVG = TextToSVG.loadSync(fontPath);
+
+    // Generate path element for the text
+    const pathData = textToSVG.getPath(watermarkText, {
+      x: width / 2,
+      y: height / 2,
+      fontSize: fontSize,
+      anchor: "center middle",
+      attributes: {
+        fill: "white",
+        opacity: "0.6",
+      },
+    });
+
     const watermark = `
       <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <style>
-          @font-face {
-            font-family: 'RobotoEmbedded';
-            src: url('data:font/ttf;base64,${ROBOTO_BASE64}') format('truetype');
-          }
-        </style>
-        <text
-          x="50%"
-          y="50%"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          font-family="RobotoEmbedded, Arial, sans-serif"
-          font-size="${fontSize}"
-          font-weight="bold"
-          fill="white"
-          opacity="0.6"
-        >
-          ${watermarkText}
-        </text>
+        ${pathData}
       </svg>
     `;
 
