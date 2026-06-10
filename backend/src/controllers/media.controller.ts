@@ -1158,23 +1158,33 @@ export const downloadMedia = async (
     const eventName = media.event.title;
     const watermarkText = `${clubName} | ${eventName} | ${userRole}`;
 
+    const image = sharp(inputBuffer);
+    const metadata = await image.metadata();
+    const width = metadata.width || 1000;
+    const height = metadata.height || 1000;
+    
+    // Dynamically scale text size based on image width
+    const fontSize = Math.max(24, Math.floor(width / 25));
+
     const watermark = `
-      <svg width="1000" height="300">
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <text
           x="50%"
           y="50%"
           text-anchor="middle"
-          font-size="36"
+          dominant-baseline="middle"
+          font-family="Arial, Helvetica, sans-serif"
+          font-size="${fontSize}"
           font-weight="bold"
           fill="white"
-          opacity="0.4"
+          opacity="0.6"
         >
           ${watermarkText}
         </text>
       </svg>
     `;
 
-    const output = await sharp(inputBuffer)
+    const output = await image
       .composite([
         {
           input: Buffer.from(watermark),
