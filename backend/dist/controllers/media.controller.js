@@ -308,18 +308,33 @@ const toggleLike = async (req, res) => {
                     id: userId,
                 },
             });
-            await prisma_1.default.notification.create({
-                data: {
+            const notificationMsg = `${currentUser?.name} liked your photo`;
+            const existingNotification = await prisma_1.default.notification.findFirst({
+                where: {
                     userId: media.uploadedById,
-                    message: `${currentUser?.name} liked your photo`,
+                    message: notificationMsg,
                 },
             });
-            const notification = await prisma_1.default.notification.create({
-                data: {
-                    userId: media.uploadedById,
-                    message: `${currentUser?.name} liked your photo`,
-                },
-            });
+            let notification;
+            if (existingNotification) {
+                notification = await prisma_1.default.notification.update({
+                    where: {
+                        id: existingNotification.id,
+                    },
+                    data: {
+                        isRead: false,
+                        createdAt: new Date(),
+                    },
+                });
+            }
+            else {
+                notification = await prisma_1.default.notification.create({
+                    data: {
+                        userId: media.uploadedById,
+                        message: notificationMsg,
+                    },
+                });
+            }
             (0, socket_1.getIO)()
                 .to(media.uploadedById)
                 .emit("notification", notification);

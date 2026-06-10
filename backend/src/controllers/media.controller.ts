@@ -367,24 +367,39 @@ export const toggleLike = async (
                     id: userId,
                 },
             });
-            await prisma.notification.create({
 
-                data: {
+            const notificationMsg = `${currentUser?.name} liked your photo`;
+
+            const existingNotification = await prisma.notification.findFirst({
+                where: {
                     userId: media.uploadedById,
-                    message: `${currentUser?.name} liked your photo`,
+                    message: notificationMsg,
                 },
             });
 
-            const notification = await prisma.notification.create({
-  data: {
-    userId: media.uploadedById,
-    message: `${currentUser?.name} liked your photo`,
-  },
-});
+            let notification;
+            if (existingNotification) {
+                notification = await prisma.notification.update({
+                    where: {
+                        id: existingNotification.id,
+                    },
+                    data: {
+                        isRead: false,
+                        createdAt: new Date(),
+                    },
+                });
+            } else {
+                notification = await prisma.notification.create({
+                    data: {
+                        userId: media.uploadedById,
+                        message: notificationMsg,
+                    },
+                });
+            }
 
-getIO()
-  .to(media.uploadedById)
-  .emit("notification", notification);
+            getIO()
+              .to(media.uploadedById)
+              .emit("notification", notification);
         }
 
         res.json({
