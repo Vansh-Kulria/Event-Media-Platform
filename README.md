@@ -73,6 +73,5 @@ npm run dev               # Start client on http://localhost:3000
 
 ---
 
-## ☁️ Cloud Deployment
+## ☁️ Cloud deployment
 
-For production deployment instructions on provisioning PostgreSQL databases, hosting the backend on Render, and deploying Next.js to Vercel, please see our dedicated [Deployment Guide](docs/deployment_guide.md).
