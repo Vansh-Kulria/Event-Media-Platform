@@ -945,12 +945,17 @@ const downloadMedia = async (req, res) => {
         const metadata = await image.metadata();
         const width = metadata.width || 1000;
         const height = metadata.height || 1000;
-        // Dynamically scale text size based on image width
-        const fontSize = Math.max(24, Math.floor(width / 25));
         // Load custom font using text-to-svg
         const fontPath = path_1.default.join(__dirname, "../../fonts/Roboto-Regular.ttf");
         const textToSVG = text_to_svg_1.default.loadSync(fontPath);
-        // Generate path element for the text
+        // Dynamically scale text size based on image width and length of watermark text
+        let fontSize = Math.max(24, Math.floor(width / 25));
+        const maxTextWidth = width * 0.85; // Leave at least 7.5% margin on each side
+        const metrics = textToSVG.getMetrics(watermarkText, { fontSize });
+        if (metrics.width > maxTextWidth) {
+            fontSize = Math.max(16, Math.floor(fontSize * (maxTextWidth / metrics.width)));
+        }
+        // Generate path element with white fill and black outline (paint-order renders outline behind text)
         const pathData = textToSVG.getPath(watermarkText, {
             x: width / 2,
             y: height / 2,
@@ -958,7 +963,11 @@ const downloadMedia = async (req, res) => {
             anchor: "center middle",
             attributes: {
                 fill: "white",
-                opacity: "0.6",
+                stroke: "black",
+                "stroke-width": (Math.max(1.5, fontSize / 12)).toFixed(1),
+                "paint-order": "stroke fill",
+                "stroke-linejoin": "round",
+                opacity: "0.8",
             },
         });
         const watermark = `
