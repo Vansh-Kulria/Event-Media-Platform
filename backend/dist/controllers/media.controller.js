@@ -49,13 +49,13 @@ const uploadMedia = async (req, res) => {
             where: { id: eventId },
             select: { title: true, description: true, category: true }
         }) : null;
-        let tags = [];
+        const generatedTags = await (0, ai_service_1.generateTags)(finalPath, req.file.originalname, event?.title || "", event?.description || "", event?.category || "");
+        const tagsSet = new Set(generatedTags);
         if (req.body.tags) {
-            tags = req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+            const manualTags = req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+            manualTags.forEach((t) => tagsSet.add(t));
         }
-        else {
-            tags = await (0, ai_service_1.generateTags)(finalPath, req.file.originalname, event?.title || "", event?.description || "", event?.category || "");
-        }
+        const tags = Array.from(tagsSet);
         const filename = path_1.default.basename(finalPath);
         let mediaUrl = `/uploads/${filename}`;
         const cloudinaryUrl = await (0, cloudinary_service_1.uploadToCloudinary)(finalPath);
@@ -111,13 +111,13 @@ const uploadMediaBulk = async (req, res) => {
             catch (err) {
                 console.error("Optimization failed for", file.path, err);
             }
-            let tags = [];
+            const generatedTags = await (0, ai_service_1.generateTags)(finalPath, file.originalname, event?.title || "", event?.description || "", event?.category || "");
+            const tagsSet = new Set(generatedTags);
             if (req.body.tags) {
-                tags = req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+                const manualTags = req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+                manualTags.forEach((t) => tagsSet.add(t));
             }
-            else {
-                tags = await (0, ai_service_1.generateTags)(finalPath, file.originalname, event?.title || "", event?.description || "", event?.category || "");
-            }
+            const tags = Array.from(tagsSet);
             const filename = path_1.default.basename(finalPath);
             let mediaUrl = `/uploads/${filename}`;
             const cloudinaryUrl = await (0, cloudinary_service_1.uploadToCloudinary)(finalPath);

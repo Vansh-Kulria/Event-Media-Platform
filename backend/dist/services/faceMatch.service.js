@@ -12,7 +12,10 @@ const findMatchingPhotos = async (selfiePath) => {
     try {
         const scriptPath = path_1.default.join(__dirname, "../../python/face_match.py");
         const uploadsPath = path_1.default.join(__dirname, "../../uploads");
-        const { stdout } = await execAsync(`python "${scriptPath}" "${selfiePath}" "${uploadsPath}"`);
+        const absoluteSelfiePath = path_1.default.isAbsolute(selfiePath)
+            ? selfiePath
+            : path_1.default.resolve(path_1.default.join(__dirname, "../../", selfiePath));
+        const { stdout } = await execAsync(`python "${scriptPath}" "${absoluteSelfiePath}" "${uploadsPath}"`);
         const lines = stdout.trim().split(/\r?\n/);
         const jsonLine = lines.find(line => line.trim().startsWith("[") && line.trim().endsWith("]"));
         if (!jsonLine) {

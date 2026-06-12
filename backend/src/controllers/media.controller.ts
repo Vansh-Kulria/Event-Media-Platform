@@ -56,18 +56,20 @@ export const uploadMedia = async (
             select: { title: true, description: true, category: true }
         }) : null;
 
-        let tags: string[] = [];
+        const generatedTags = await generateTags(
+            finalPath,
+            req.file.originalname,
+            event?.title || "",
+            event?.description || "",
+            event?.category || ""
+        );
+
+        const tagsSet = new Set<string>(generatedTags);
         if (req.body.tags) {
-            tags = req.body.tags.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean);
-        } else {
-            tags = await generateTags(
-                finalPath,
-                req.file.originalname,
-                event?.title || "",
-                event?.description || "",
-                event?.category || ""
-            );
+            const manualTags = req.body.tags.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean);
+            manualTags.forEach((t: string) => tagsSet.add(t));
         }
+        const tags = Array.from(tagsSet);
         const filename = path.basename(finalPath);
 
         let mediaUrl = `/uploads/${filename}`;
@@ -134,18 +136,20 @@ export const uploadMediaBulk = async (
                 console.error("Optimization failed for", file.path, err);
             }
 
-            let tags: string[] = [];
+            const generatedTags = await generateTags(
+                finalPath,
+                file.originalname,
+                event?.title || "",
+                event?.description || "",
+                event?.category || ""
+            );
+
+            const tagsSet = new Set<string>(generatedTags);
             if (req.body.tags) {
-                tags = req.body.tags.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean);
-            } else {
-                tags = await generateTags(
-                    finalPath,
-                    file.originalname,
-                    event?.title || "",
-                    event?.description || "",
-                    event?.category || ""
-                );
+                const manualTags = req.body.tags.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean);
+                manualTags.forEach((t: string) => tagsSet.add(t));
             }
+            const tags = Array.from(tagsSet);
 
             const filename = path.basename(finalPath);
 
