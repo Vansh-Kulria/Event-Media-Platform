@@ -70,7 +70,7 @@ export default function MediaUpload({
 
     try {
       setLoading(true);
-      await uploadMediaBulk(eventId, files);
+      await uploadMediaBulk(eventId, files, tags);
       toast.success("Media uploaded successfully");
       setFiles([]);
       setPreviews([]);

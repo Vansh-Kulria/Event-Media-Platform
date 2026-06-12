@@ -141,15 +141,17 @@ export default function MediaCard({
   };
 
   const handleDelete = async () => {
-    const confirmed = window.confirm("Delete this photo?");
+    const isVid = media.type === "VIDEO";
+    const label = isVid ? "video" : "photo";
+    const confirmed = window.confirm(`Delete this ${label}?`);
     if (!confirmed) return;
     try {
       await deleteMedia(media.id);
-      toast.success("Photo deleted successfully");
+      toast.success(`${isVid ? "Video" : "Photo"} deleted successfully`);
       onDelete?.();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete photo");
+      toast.error(`Failed to delete ${label}`);
     }
   };
 
@@ -196,35 +198,54 @@ export default function MediaCard({
     <>
       <div className="group relative flex flex-col h-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-white/20">
         {/* Uploader info (Social Header) */}
-        {media.uploadedBy && (
-          <div className="flex items-center gap-2.5 mb-3 px-0.5">
-            <Link 
-              href={`/dashboard/users/${media.uploadedBy.id}`} 
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-tr from-violet-500 to-indigo-500 text-[11px] font-extrabold text-white uppercase shadow-inner cursor-pointer hover:opacity-90 transition"
-            >
-              {media.uploadedBy.selfieUrl && media.uploadedBy.selfieUrl !== "null" && media.uploadedBy.selfieUrl !== "undefined" && media.uploadedBy.selfieUrl.trim() !== "" ? (
-                <img 
-                  src={media.uploadedBy.selfieUrl.startsWith("http") ? media.uploadedBy.selfieUrl : `http://localhost:5000${media.uploadedBy.selfieUrl}`} 
-                  alt={media.uploadedBy.name} 
-                  className="h-full w-full rounded-full object-cover" 
-                />
-              ) : (
-                media.uploadedBy.name.charAt(0)
-              )}
-            </Link>
-            <div className="flex flex-col">
+        <div className="flex items-center justify-between mb-3 px-0.5 min-h-[32px]">
+          {media.uploadedBy ? (
+            <div className="flex items-center gap-2.5">
               <Link 
                 href={`/dashboard/users/${media.uploadedBy.id}`} 
-                className="text-xs font-extrabold text-slate-800 dark:text-slate-200 hover:text-violet-500 dark:hover:text-violet-400 transition cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-tr from-violet-500 to-indigo-500 text-[11px] font-extrabold text-white uppercase shadow-inner cursor-pointer hover:opacity-90 transition"
               >
-                {media.uploadedBy.name}
+                {media.uploadedBy.selfieUrl && media.uploadedBy.selfieUrl !== "null" && media.uploadedBy.selfieUrl !== "undefined" && media.uploadedBy.selfieUrl.trim() !== "" ? (
+                  <img 
+                    src={media.uploadedBy.selfieUrl.startsWith("http") ? media.uploadedBy.selfieUrl : `http://localhost:5000${media.uploadedBy.selfieUrl}`} 
+                    alt={media.uploadedBy.name} 
+                    className="h-full w-full rounded-full object-cover" 
+                  />
+                ) : (
+                  media.uploadedBy.name.charAt(0)
+                )}
               </Link>
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                {media.uploadedBy.role || "MEMBER"}
-              </span>
+              <div className="flex flex-col">
+                <Link 
+                  href={`/dashboard/users/${media.uploadedBy.id}`} 
+                  className="text-xs font-extrabold text-slate-800 dark:text-slate-200 hover:text-violet-500 dark:hover:text-violet-400 transition cursor-pointer"
+                >
+                  {media.uploadedBy.name}
+                </Link>
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                  {media.uploadedBy.role || "MEMBER"}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              Media Upload
+            </div>
+          )}
+
+          {canDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-500/10 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 border border-slate-200 dark:border-white/10 hover:border-red-200 dark:hover:border-red-500/25 transition cursor-pointer"
+              title="Delete Media"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         {/* Thumbnail (opens Lightbox on click) */}
         <div 
@@ -289,19 +310,6 @@ export default function MediaCard({
                 className="h-5 w-5 rounded border-white/20 bg-black/60 text-violet-600 focus:ring-violet-500 cursor-pointer accent-violet-600"
               />
             </div>
-          )}
-
-          {/* Top-right delete control */}
-          {canDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-600/90 text-white opacity-0 group-hover/thumb:opacity-100 transition duration-200 cursor-pointer shadow-lg z-10 hover:bg-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
           )}
         </div>
 

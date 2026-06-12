@@ -2,12 +2,16 @@ import api from "@/lib/axios";
 
 export const uploadMedia = async (
   eventId: string,
-  file: File
+  file: File,
+  tags?: string
 ) => {
   const formData = new FormData();
 
   formData.append("file", file);
   formData.append("eventId", eventId);
+  if (tags) {
+    formData.append("tags", tags);
+  }
 
   const response = await api.post(
     "/media/upload",
@@ -25,13 +29,17 @@ export const uploadMedia = async (
 
 export const uploadMediaBulk = async (
   eventId: string,
-  files: File[]
+  files: File[],
+  tags?: string
 ) => {
   const formData = new FormData();
   files.forEach((file) => {
     formData.append("files", file);
   });
   formData.append("eventId", eventId);
+  if (tags) {
+    formData.append("tags", tags);
+  }
 
   const response = await api.post(
     "/media/upload-bulk",
