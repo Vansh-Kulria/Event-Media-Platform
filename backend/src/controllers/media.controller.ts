@@ -3,8 +3,7 @@ import prisma from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { MediaType } from "@prisma/client/wasm";
 import { generateTags } from "../services/ai.service";
-import { findMatchingPhotos }
-from "../services/faceMatch.service";
+import { findMatchingPhotos, ensureLocalFile } from "../services/faceMatch.service";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
@@ -892,50 +891,50 @@ export const uploadSelfie = async (
             selfieUrl: user.selfieUrl,
         });
 
-        const selfiePath = `uploads/${req.file.filename}`;
+        const selfieFilename = req.file.filename;
+        const selfiePath = `uploads/${selfieFilename}`;
 
-const matches = await findMatchingPhotos(
-  selfiePath
-);
-console.log("MATCHES:", matches);
+        findMatchingPhotos(selfiePath)
+            .then(async (matches) => {
+                console.log("MATCHES:", matches);
+                for (const matchPath of matches) {
+                    const normalizedPath = "/" + matchPath.replace(/\\/g, "/");
 
-for (const matchPath of matches) {
-  const normalizedPath =
-    "/" + matchPath.replace(/\\/g, "/");
+                    // Skip the selfie itself
+                    if (normalizedPath.includes(selfieFilename)) {
+                        continue;
+                    }
 
-  // Skip the selfie itself
-  if (normalizedPath.includes(req.file.filename)) {
-    continue;
-  }
+                    const filename = path.basename(matchPath);
+                    const media = await prisma.media.findFirst({
+                        where: {
+                            url: {
+                                contains: filename,
+                            },
+                        },
+                    });
 
-  const filename = path.basename(matchPath);
-  const media = await prisma.media.findFirst({
-    where: {
-      url: {
-        contains: filename,
-      },
-    },
-  });
+                    if (!media) continue;
 
-  if (!media) continue;
-
-  await prisma.faceMatch.upsert({
-    where: {
-      userId_mediaId: {
-        userId: user.id,
-        mediaId: media.id,
-      },
-    },
-
-    update: {},
-
-    create: {
-      userId: user.id,
-      mediaId: media.id,
-      confidence: 0.95,
-    },
-  });
-}
+                    await prisma.faceMatch.upsert({
+                        where: {
+                            userId_mediaId: {
+                                userId: user.id,
+                                mediaId: media.id,
+                            },
+                        },
+                        update: {},
+                        create: {
+                            userId: user.id,
+                            mediaId: media.id,
+                            confidence: 0.95,
+                        },
+                    });
+                }
+            })
+            .catch((err) => {
+                console.error("Background face matching failed during selfie upload:", err);
+            });
 
     } catch (error) {
         console.error(error);
@@ -989,17 +988,8 @@ export const recognizeFace = async (
             },
         });
 
-        const selfieBasename = path.basename(user.selfieUrl, path.extname(user.selfieUrl));
-        const uploadsDir = path.join(__dirname, "../../uploads");
-        const files = fs.readdirSync(uploadsDir);
-        const matchingFile = files.find(file => path.basename(file, path.extname(file)) === selfieBasename);
-        
-        if (!matchingFile) {
-            return res.status(400).json({
-                message: "Reference selfie local file not found on server disk",
-            });
-        }
-        const selfiePath = `uploads/${matchingFile}`;
+        const selfiePath = await ensureLocalFile(user.selfieUrl);
+        const selfieBasename = path.basename(selfiePath, path.extname(selfiePath));
 
         let matchesCreated = 0;
         const matches = await findMatchingPhotos(selfiePath);
