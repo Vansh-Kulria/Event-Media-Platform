@@ -1,23 +1,23 @@
-# ⚡ Event Media Platform
+# Event Media Platform
 
 An advanced, high-fidelity web platform for hosting, searching, and managing event media albums. Powered by deep-learning AI facial recognition, automated image tagging, and real-time interaction metrics.
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-* **🤳 AI Facial Recognition**: Upload a reference selfie to instantly match and retrieve all photos of you across all public and private event galleries.
-* **🏷️ Smart AI Image Tagging**: Every uploaded photo is automatically classified using a pre-trained **MobileNetV2** model to generate rich, contextual hashtag pills (e.g. `#nature`, `#sports`, `#dining`).
-* **🔗 Advanced Social Sharing**: Share photos and videos via direct links, WhatsApp, X (Twitter), or Facebook. Nearby friends can scan a dynamically generated **QR Code** directly from your screen.
-* **📊 Analytical Dashboard**: Gain insights into platform activity with real-time statistics displaying total events, media counts, top photographers, and the most liked image.
-* **⭐ Interactive Features**: Support for hollow/solid star favorites, media likes, notifications inbox, and a dedicated floating comments thread modal.
-* **🌓 Light & Dark Theme switchers**: A theme toggler supporting cohesive styling across slate panels and glassmorphism elements.
-* **🎬 HTML5 Video Support**: Automatic format detection and responsive playback of video files in grids and lightbox views.
-* **☁️ Cloudinary Storage Integration**: Automated fallback to local disk storage if cloud configurations are omitted.
+* **AI Facial Recognition**: Upload a reference selfie to instantly match and retrieve all photos of you across all public and private event galleries.
+* **Smart AI Image Tagging**: Every uploaded photo is automatically classified using a pre-trained **MobileNetV2** model to generate rich, contextual hashtag pills (e.g. `#nature`, `#sports`, `#dining`).
+* **Advanced Social Sharing**: Share photos and videos via direct links, WhatsApp, X (Twitter), or Facebook. Nearby friends can scan a dynamically generated **QR Code** directly from your screen.
+* **Analytical Dashboard**: Gain insights into platform activity with real-time statistics displaying total events, media counts, top photographers, and the most liked image.
+* **Interactive Features**: Support for hollow/solid star favorites, media likes, notifications inbox, and a dedicated floating comments thread modal.
+* **Light & Dark Theme switchers**: A theme toggler supporting cohesive styling across slate panels and glassmorphism elements.
+* **HTML5 Video Support**: Automatic format detection and responsive playback of video files in grids and lightbox views.
+* **Cloudinary Storage Integration**: Automated fallback to local disk storage if cloud configurations are omitted.
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 * **Frontend**: Next.js 16 (App Router), React 19, Lucide icons, Sonner toasts, and TailwindCSS.
 * **Backend**: Node.js, Express, TypeScript, Prisma (PostgreSQL), and Multer.
@@ -26,7 +26,7 @@ An advanced, high-fidelity web platform for hosting, searching, and managing eve
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 event-media-platform/
@@ -41,7 +41,7 @@ event-media-platform/
 
 ---
 
-## 💻 Local Setup & Execution
+## Local Setup & Execution
 
 ### Prerequisites
 - Node.js (v18+)
@@ -73,5 +73,19 @@ npm run dev               # Start client on http://localhost:3000
 
 ---
 
-## ☁️ Cloud deployment
+## Cloud Deployment
 
+The live web application is deployed and accessible at:
+**[Event Media Platform (Live Website)](https://event-media-platform-pearl.vercel.app/)**
+
+### Frontend Deployment (Vercel)
+1. Set the following environment variable in your Vercel project settings:
+   ```env
+   NEXT_PUBLIC_API_URL="https://your-backend-api.com/api"
+   ```
+2. Deploy the `frontend/` folder directly to Vercel.
+
+### Backend Deployment
+1. Set up a cloud PostgreSQL database (e.g., Supabase, Neon, or AWS RDS).
+2. Configure environment variables for the database and Cloudinary storage.
+3. Deploy the Express server (`backend/` folder) to a hosting platform like Render, Railway, or Heroku.

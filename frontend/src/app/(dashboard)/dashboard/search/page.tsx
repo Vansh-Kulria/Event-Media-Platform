@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { searchMedia } from "@/services/media.service";
 import MediaCard from "@/components/media/MediaCard";
+import { Tag, Calendar, User, Search, Sparkles } from "lucide-react";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -33,31 +34,46 @@ export default function SearchPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="border-b border-white/5 pb-6">
-        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+      <div className="border-b border-slate-200 dark:border-white/5 pb-6">
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:via-slate-200 dark:to-slate-400 bg-clip-text text-transparent">
           Smart AI Tag Search
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
           Search for images using AI tags, event albums, or photographer names.
         </p>
       </div>
 
       {/* Search Bar Container */}
-      <form onSubmit={handleSearch} className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-xl space-y-4">
+      <form onSubmit={handleSearch} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-6 backdrop-blur-xl shadow-xl space-y-4">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex bg-slate-950 border border-white/10 rounded-xl p-1">
+          <div className="flex bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl p-1">
             {(["tag", "event", "user"] as const).map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => setSearchType(type)}
-                className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+                className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
                   searchType === type
                     ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow"
-                    : "text-slate-400 hover:text-white"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                {type === "tag" ? "🏷️ AI Tags" : type === "event" ? "📅 Events" : "👤 Uploaded By"}
+                {type === "tag" ? (
+                  <>
+                    <Tag className="h-3.5 w-3.5" />
+                    <span>AI Tags</span>
+                  </>
+                ) : type === "event" ? (
+                  <>
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>Events</span>
+                  </>
+                ) : (
+                  <>
+                    <User className="h-3.5 w-3.5" />
+                    <span>Photographer</span>
+                  </>
+                )}
               </button>
             ))}
           </div>
@@ -69,12 +85,12 @@ export default function SearchPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={
                 searchType === "tag"
-                  ? "Enter AI tag (e.g. prison, candid, sports, nature)..."
+                  ? "Enter AI tag (e.g. sports, nature, dining)..."
                   : searchType === "event"
                   ? "Enter event album title..."
                   : "Enter photographer name..."
               }
-              className="w-full rounded-xl border border-white/15 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500 transition"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-500 outline-none focus:border-violet-500 dark:focus:border-violet-500 transition shadow-inner"
             />
           </div>
 
@@ -96,9 +112,11 @@ export default function SearchPage() {
         </div>
       ) : results.length === 0 ? (
         hasSearched && (
-          <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-12 text-center">
-            <span className="text-4xl block mb-2">🤷‍♂️</span>
-            <p className="text-slate-300 font-semibold">No matches found</p>
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 p-12 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 mb-4">
+              <Search className="h-6 w-6" />
+            </div>
+            <p className="text-slate-700 dark:text-slate-300 font-semibold">No matches found</p>
             <p className="text-slate-500 text-xs mt-1">Try another keyword or search category.</p>
           </div>
         )
@@ -121,3 +139,4 @@ export default function SearchPage() {
     </div>
   );
 }
+

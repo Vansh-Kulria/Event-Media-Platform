@@ -61,9 +61,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-955 px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
       {/* Background blobs */}
       <div className="absolute top-1/4 left-1/4 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />

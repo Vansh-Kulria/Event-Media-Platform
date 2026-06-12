@@ -5,6 +5,7 @@ import { getEventMedia, deleteMediaBulk } from "@/services/media.service";
 import MediaCard from "./MediaCard";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 type Props = {
   eventId: string;
@@ -111,7 +112,8 @@ export default function MediaGallery({ eventId }: Props) {
                   disabled={loading}
                   className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  🗑️ {loading ? "Deleting..." : "Delete Selected"}
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>{loading ? "Deleting..." : "Delete Selected"}</span>
                 </button>
               )}
             </>

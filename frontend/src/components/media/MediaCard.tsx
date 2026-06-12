@@ -15,7 +15,7 @@ import api from "@/lib/axios";
 import { useAuthStore } from "@/store/auth-store";
 import MediaComments from "./MediaComments";
 import { toast } from "sonner";
-import { Star, X, Heart, MessageCircle, Share2, Download, Link as LinkIcon, Check, ExternalLink } from "lucide-react";
+import { Star, X, Heart, MessageCircle, Share2, Download, Link as LinkIcon, Check, ExternalLink, Play, Trash2, UserCheck } from "lucide-react";
 
 type Props = {
   media: any;
@@ -241,7 +241,9 @@ export default function MediaCard({
                 preload="metadata"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/thumb:bg-black/35 transition duration-300">
-                <span className="text-3xl drop-shadow-lg text-white">▶️</span>
+                <div className="rounded-full bg-white/20 backdrop-blur-md border border-white/30 p-3 text-white transition duration-200 group-hover/thumb:scale-110">
+                  <Play className="h-6 w-6 fill-white" />
+                </div>
               </div>
             </div>
           ) : (
@@ -296,9 +298,9 @@ export default function MediaCard({
                 e.stopPropagation();
                 handleDelete();
               }}
-              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-600/80 text-white opacity-0 group-hover/thumb:opacity-100 transition duration-200 cursor-pointer shadow-lg z-10"
+              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-600/90 text-white opacity-0 group-hover/thumb:opacity-100 transition duration-200 cursor-pointer shadow-lg z-10 hover:bg-red-700"
             >
-              ✕
+              <Trash2 className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -413,9 +415,10 @@ export default function MediaCard({
               {tags.map((tg) => (
                 <span
                   key={tg.id}
-                  className="inline-flex items-center gap-1 rounded bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300"
+                  className="inline-flex items-center gap-1 rounded bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-350"
                 >
-                  🏷️ {tg.user.name}
+                  <UserCheck className="h-3 w-3 text-violet-500" />
+                  <span>{tg.user.name}</span>
                 </span>
               ))}
             </div>
@@ -476,7 +479,8 @@ export default function MediaCard({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3 mb-2">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                💬 Comments Thread
+                <MessageCircle className="h-4.5 w-4.5 text-violet-500" />
+                <span>Comments Thread</span>
               </h3>
               <button
                 onClick={() => setShowCommentsModal(false)}
@@ -616,9 +620,12 @@ export default function MediaCard({
             </div>
 
             {/* Share Stats */}
-            <div className="border-t border-white/5 pt-3.5 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-              <span>📈 Total Shares</span>
-              <span className="font-extrabold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2.5 py-0.5 rounded-full">
+            <div className="border-t border-slate-100 dark:border-white/5 pt-3.5 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <Share2 className="h-3.5 w-3.5 text-violet-500" />
+                <span>Total Shares</span>
+              </span>
+              <span className="font-extrabold text-violet-650 dark:text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2.5 py-0.5 rounded-full">
                 {shareData.count} shares
               </span>
             </div>

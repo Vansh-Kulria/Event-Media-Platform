@@ -193,7 +193,7 @@ export default function RegisterPage() {
               </div>
               {passwordStrength && (
                 <p className={`mt-1.5 text-[11px] font-bold tracking-wide transition-colors duration-200 ${getPasswordStrengthColor()}`}>
-                  💪 Strength: {passwordStrength}
+                  Password strength: {passwordStrength}
                 </p>
               )}
             </div>

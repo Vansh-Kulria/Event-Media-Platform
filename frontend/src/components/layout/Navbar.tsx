@@ -3,16 +3,10 @@
 import MobileSidebar from "./MobileSidebar";
 import UserDropdown from "./UserDropdown";
 import ThemeToggle from "./ThemeToggle";
-
-import { useEffect, useState }
-  from "react";
-
-import {
-  getUnreadCount,
-} from "@/services/notification.service";
+import { useEffect, useState } from "react";
+import { getUnreadCount } from "@/services/notification.service";
 import Link from "next/link";
-
-
+import { Bell } from "lucide-react";
 
 export default function Navbar() {
   const [count, setCount] = useState(0);
@@ -42,13 +36,13 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-white/10 bg-slate-900/40 px-6 backdrop-blur-md sticky top-0 z-40">
+    <header className="flex h-16 items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/40 px-6 backdrop-blur-md sticky top-0 z-40">
       <div className="flex items-center gap-4">
         <div className="md:hidden">
           <MobileSidebar />
         </div>
 
-        <h1 className="font-bold text-lg bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+        <h1 className="font-bold text-lg bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400 bg-clip-text text-transparent">
           Event Media Platform
         </h1>
       </div>
@@ -59,7 +53,7 @@ export default function Navbar() {
           href="/dashboard/notifications"
           className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
         >
-          <span>🔔</span>
+          <Bell className="h-4.5 w-4.5" />
           {count > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-[9px] font-bold text-white shadow-lg animate-pulse">
               {count}
@@ -70,4 +64,4 @@ export default function Navbar() {
       </div>
     </header>
   );
-}
+}

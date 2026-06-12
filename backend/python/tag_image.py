@@ -9,6 +9,7 @@ import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
 from tensorflow.keras.preprocessing import image
 import numpy as np
+import cv2
 
 # A dictionary mapping raw ImageNet labels/keywords to human-friendly social/event tags
 FRIENDLY_VOCABULARY = {
@@ -57,6 +58,8 @@ FRIENDLY_VOCABULARY = {
     "tree": ["trees", "nature", "outdoor"],
     "park": ["park", "nature", "outdoor"],
     "lakeside": ["nature", "outdoor", "lake"],
+    "flower": ["nature", "outdoor", "floral"],
+    "garden": ["nature", "outdoor", "garden"],
 
     # Buildings & Interiors
     "palace": ["architecture", "building"],
@@ -77,35 +80,38 @@ FRIENDLY_VOCABULARY = {
     "laptop": ["indoor", "technology", "work"],
     "notebook": ["indoor", "work"],
     "computer": ["indoor", "technology"],
+
+    # Vehicles & Transport
+    "car": ["vehicle", "transport", "outdoor"],
+    "cab": ["vehicle", "transport", "outdoor"],
+    "limousine": ["vehicle", "transport", "outdoor"],
+    "motorcycle": ["vehicle", "transport", "outdoor"],
+    "bicycle": ["vehicle", "transport", "outdoor"],
+    "truck": ["vehicle", "transport", "outdoor"],
+    "bus": ["vehicle", "transport", "outdoor"],
+
+    # Animals & Pets
+    "dog": ["animals", "pets", "outdoor"],
+    "cat": ["animals", "pets", "indoor"],
+    "horse": ["animals", "nature", "outdoor"],
+    "bird": ["animals", "nature", "outdoor"],
 }
 
 def map_predictions_to_friendly_tags(decoded_preds):
     friendly_tags = set()
     
-    # 1. Match against our friendly vocabulary dictionary
+    # Match against our friendly vocabulary dictionary (minimum 10% confidence for better accuracy)
     for _, label, prob in decoded_preds:
-        if prob > 0.05:
+        if prob > 0.10:
             label_lower = label.replace('_', ' ').lower()
             
-            # Check for direct or partial keyword matches
-            matched = False
+            # Check for direct or partial keyword matches in friendly vocabulary
             for keyword, mapped_tags in FRIENDLY_VOCABULARY.items():
                 if keyword in label_lower:
                     for tag in mapped_tags:
                         friendly_tags.add(tag)
-                    matched = True
-            
-            if not matched:
-                # Keep original cleaned up ImageNet tag only if it's not obscure
-                obscure_keywords = [
-                    "prison", "envelope", "sliding door", "window screen", "oxygen mask",
-                    "combination lock", "carton", "safety pin", "modem", "hook", "screwdriver",
-                    "corkscrew", "strainer", "crate", "pill bottle", "brass", "dial telephone"
-                ]
-                if not any(ob in label_lower for ob in obscure_keywords):
-                    friendly_tags.add(label_lower)
 
-    # 2. General inference rules if tags are empty or sparse
+    # General inference rules if no friendly tags were matched
     if len(friendly_tags) == 0:
         # Check top prediction
         top_label = decoded_preds[0][1].replace('_', ' ').lower()
@@ -122,10 +128,36 @@ def map_predictions_to_friendly_tags(decoded_preds):
 
 def tag_image(img_path):
     try:
-        img = image.load_img(img_path, target_size=(224, 224))
-        x = image.img_to_array(img)
-        x = np.expand_dims(x, axis=0)
-        x = preprocess_input(x)
+        # Handle video format check
+        ext = os.path.splitext(img_path)[1].lower()
+        if ext in ['.mp4', '.mov', '.webm', '.avi', '.mkv']:
+            cap = cv2.VideoCapture(img_path)
+            frame = None
+            # Skip potential leading black/fade-in frames (up to 30 frames)
+            for _ in range(30):
+                success, f = cap.read()
+                if not success:
+                    break
+                frame = f
+                if np.mean(f) > 15:
+                    break
+            cap.release()
+            
+            if frame is not None:
+                # Convert BGR to RGB
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img_resized = cv2.resize(frame_rgb, (224, 224))
+                x = img_resized.astype(np.float32)
+                x = np.expand_dims(x, axis=0)
+                x = preprocess_input(x)
+            else:
+                raise Exception("Could not read any frames from video")
+        else:
+            # Standard image load
+            img = image.load_img(img_path, target_size=(224, 224))
+            x = image.img_to_array(img)
+            x = np.expand_dims(x, axis=0)
+            x = preprocess_input(x)
 
         model = MobileNetV2(weights='imagenet')
         preds = model.predict(x, verbose=0)
@@ -133,6 +165,7 @@ def tag_image(img_path):
 
         return map_predictions_to_friendly_tags(decoded)
     except Exception as e:
+        print(f"Tagging error: {e}", file=sys.stderr)
         return ["people", "portrait", "candid"]
 
 if __name__ == "__main__":
@@ -143,3 +176,4 @@ if __name__ == "__main__":
     img_path = sys.argv[1]
     tags = tag_image(img_path)
     print(json.dumps(tags))
+

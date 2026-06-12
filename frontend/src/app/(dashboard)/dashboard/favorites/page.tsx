@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getMyFavorites } from "@/services/media.service";
 import MediaCard from "@/components/media/MediaCard";
+import { Star } from "lucide-react";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -27,11 +28,11 @@ export default function FavoritesPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="border-b border-white/5 pb-6">
-        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+      <div className="border-b border-slate-200 dark:border-white/5 pb-6">
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:via-slate-200 dark:to-slate-400 bg-clip-text text-transparent">
           My Favorites
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
           Your bookmarked photos from events.
         </p>
       </div>
@@ -42,9 +43,11 @@ export default function FavoritesPage() {
           <p className="text-slate-400 text-sm">Loading favorites...</p>
         </div>
       ) : favorites.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-12 text-center">
-          <span className="text-4xl block mb-2">⭐</span>
-          <p className="text-slate-300 font-semibold">No favorites yet</p>
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 p-12 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 mb-4">
+            <Star className="h-6 w-6" />
+          </div>
+          <p className="text-slate-700 dark:text-slate-300 font-semibold">No favorites yet</p>
           <p className="text-slate-500 text-xs mt-1">Star event photos to save them here!</p>
         </div>
       ) : (
@@ -60,4 +63,4 @@ export default function FavoritesPage() {
       )}
     </div>
   );
-}
+}
