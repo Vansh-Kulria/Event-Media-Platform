@@ -1,12 +1,18 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.findMatchingPhotos = void 0;
 const child_process_1 = require("child_process");
 const util_1 = require("util");
+const path_1 = __importDefault(require("path"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const findMatchingPhotos = async (selfiePath) => {
     try {
-        const { stdout } = await execAsync(`python python/face_match.py "${selfiePath}" uploads`);
+        const scriptPath = path_1.default.join(__dirname, "../../python/face_match.py");
+        const uploadsPath = path_1.default.join(__dirname, "../../uploads");
+        const { stdout } = await execAsync(`python "${scriptPath}" "${selfiePath}" "${uploadsPath}"`);
         const lines = stdout.trim().split(/\r?\n/);
         const jsonLine = lines.find(line => line.trim().startsWith("[") && line.trim().endsWith("]"));
         if (!jsonLine) {

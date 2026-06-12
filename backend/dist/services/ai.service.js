@@ -1,15 +1,20 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateTags = void 0;
 const child_process_1 = require("child_process");
 const util_1 = require("util");
+const path_1 = __importDefault(require("path"));
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const generateTags = async (filePath, originalName, eventTitle, eventDescription, eventCategory) => {
     const allTagsSet = new Set();
     // 1. Run AI Tagging from Python script
     let aiTags = [];
     try {
-        const { stdout } = await execAsync(`python python/tag_image.py "${filePath}"`);
+        const scriptPath = path_1.default.join(__dirname, "../../python/tag_image.py");
+        const { stdout } = await execAsync(`python "${scriptPath}" "${filePath}"`);
         const lines = stdout.trim().split(/\r?\n/);
         const jsonLine = lines.find(line => line.trim().startsWith("[") && line.trim().endsWith("]"));
         if (jsonLine) {

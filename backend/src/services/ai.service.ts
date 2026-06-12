@@ -16,8 +16,9 @@ export const generateTags = async (
   // 1. Run AI Tagging from Python script
   let aiTags: string[] = [];
   try {
+    const scriptPath = path.join(__dirname, "../../python/tag_image.py");
     const { stdout } = await execAsync(
-      `python python/tag_image.py "${filePath}"`
+      `python "${scriptPath}" "${filePath}"`
     );
     const lines = stdout.trim().split(/\r?\n/);
     const jsonLine = lines.find(line => line.trim().startsWith("[") && line.trim().endsWith("]"));
