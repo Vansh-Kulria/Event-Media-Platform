@@ -50,14 +50,24 @@ export const uploadMedia = async (
             console.error("Optimization failed for", req.file.path, err);
         }
 
+        const { eventId } = req.body;
+        const event = eventId ? await prisma.event.findUnique({
+            where: { id: eventId },
+            select: { title: true, description: true, category: true }
+        }) : null;
+
         let tags: string[] = [];
         if (req.body.tags) {
-            tags = req.body.tags.split(",");
+            tags = req.body.tags.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean);
         } else {
-            tags = await generateTags(finalPath);
+            tags = await generateTags(
+                finalPath,
+                req.file.originalname,
+                event?.title || "",
+                event?.description || "",
+                event?.category || ""
+            );
         }
-
-        const { eventId } = req.body;
         const filename = path.basename(finalPath);
 
         let mediaUrl = `/uploads/${filename}`;
@@ -109,6 +119,11 @@ export const uploadMediaBulk = async (
             });
         }
 
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+            select: { title: true, description: true, category: true }
+        });
+
         const createdMedia = [];
 
         for (const file of files) {
@@ -121,9 +136,15 @@ export const uploadMediaBulk = async (
 
             let tags: string[] = [];
             if (req.body.tags) {
-                tags = req.body.tags.split(",");
+                tags = req.body.tags.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean);
             } else {
-                tags = await generateTags(finalPath);
+                tags = await generateTags(
+                    finalPath,
+                    file.originalname,
+                    event?.title || "",
+                    event?.description || "",
+                    event?.category || ""
+                );
             }
 
             const filename = path.basename(finalPath);

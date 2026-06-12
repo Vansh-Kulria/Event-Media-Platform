@@ -44,14 +44,18 @@ const uploadMedia = async (req, res) => {
         catch (err) {
             console.error("Optimization failed for", req.file.path, err);
         }
+        const { eventId } = req.body;
+        const event = eventId ? await prisma_1.default.event.findUnique({
+            where: { id: eventId },
+            select: { title: true, description: true, category: true }
+        }) : null;
         let tags = [];
         if (req.body.tags) {
-            tags = req.body.tags.split(",");
+            tags = req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
         }
         else {
-            tags = await (0, ai_service_1.generateTags)(finalPath);
+            tags = await (0, ai_service_1.generateTags)(finalPath, req.file.originalname, event?.title || "", event?.description || "", event?.category || "");
         }
-        const { eventId } = req.body;
         const filename = path_1.default.basename(finalPath);
         let mediaUrl = `/uploads/${filename}`;
         const cloudinaryUrl = await (0, cloudinary_service_1.uploadToCloudinary)(finalPath);
@@ -94,6 +98,10 @@ const uploadMediaBulk = async (req, res) => {
                 message: "eventId is required",
             });
         }
+        const event = await prisma_1.default.event.findUnique({
+            where: { id: eventId },
+            select: { title: true, description: true, category: true }
+        });
         const createdMedia = [];
         for (const file of files) {
             let finalPath = file.path;
@@ -105,10 +113,10 @@ const uploadMediaBulk = async (req, res) => {
             }
             let tags = [];
             if (req.body.tags) {
-                tags = req.body.tags.split(",");
+                tags = req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
             }
             else {
-                tags = await (0, ai_service_1.generateTags)(finalPath);
+                tags = await (0, ai_service_1.generateTags)(finalPath, file.originalname, event?.title || "", event?.description || "", event?.category || "");
             }
             const filename = path_1.default.basename(finalPath);
             let mediaUrl = `/uploads/${filename}`;
